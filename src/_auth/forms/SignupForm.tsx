@@ -42,7 +42,7 @@ function SignupForm() {
 
         if (isLoggedIn) {
             form.reset();
-            navigate('/home')
+            navigate('/')
         }else{
             return toast({ title: "Sign in failed. Please try again.", variant: "destructive" })
         }

@@ -37,7 +37,7 @@ function SigninForm() {
     if (isLoggedIn) {
       console.log('NAVIGATING')
       form.reset();
-      navigate('/home')
+      navigate('/')
     } else {
       return toast({ title: "Sign in failed. Please try again.", variant: "destructive" })
     }
