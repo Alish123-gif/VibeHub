@@ -12,6 +12,7 @@ import { Models } from "appwrite"
 import { useCreatePost } from "@/lib/react-query/queriesAndMutations"
 import { useUserContext } from "@/context/AuthContext"
 import { useToast } from "../ui/use-toast"
+import Loader from "../shared/Loader"
 
 
 type PostFormProps = {
@@ -104,16 +105,25 @@ const PostForm = ({ post }: PostFormProps) => {
                     )}
                 />
                 <div className="flex gap-4 items-center justify-end">
-                    <Button
-                        type="button"
-                        className="shad-button_dark_4">
-                        Cancel
-                    </Button>
-                    <Button
-                        type="submit"
-                        className="shad-button_primary whitespace-nowrap">
-                        Submit
-                    </Button>
+                    {isLoadingCreate ? (
+                        <div className="flex-center gap-2">
+                            <Loader />Posting...
+                        </div>) :
+                        <>
+                            <Button
+                                type="button"
+                                className="shad-button_dark_4">
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                className="shad-button_primary whitespace-nowrap">
+                                Submit
+                            </Button>
+                        </>
+
+                    }
+
                 </div>
 
             </form>
