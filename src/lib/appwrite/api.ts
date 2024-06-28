@@ -185,25 +185,25 @@ export async function likePost(postId: string, likesArray: string[]) {
             appwriteConfig.postCollectionId,
             postId,
             {
-                likes: likesArray
+                likes: likesArray,
             }
-        )
+        );
 
-        if (!updatedPost) return Error;
+        if (!updatedPost) throw Error;
 
-        return updatedPost
+        return updatedPost;
     } catch (error) {
-        console.log(error)
+        console.log(error);
     }
 }
-export async function deleteSavePost(savedRecordId: string) {
+export async function deleteSavedPost(savedRecordId: string) {
     try {
         const statusCode = await databases.deleteDocument(
             appwriteConfig.databaseId,
             appwriteConfig.savesCollectionId,
             savedRecordId
         )
-        if (!statusCode) return Error;
+        if (!statusCode) throw Error;
 
         return { status: 'ok' }
     } catch (error) {
