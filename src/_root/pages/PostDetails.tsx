@@ -1,16 +1,22 @@
 import Loader from '@/components/shared/Loader'
+import PostStats from '@/components/shared/PostStats'
 import { Button } from '@/components/ui/button'
 import { useUserContext } from '@/context/AuthContext'
-import { useGetPostById } from '@/lib/react-query/queriesAndMutations'
+import { useDeletePost, useGetPostById } from '@/lib/react-query/queriesAndMutations'
 import { timeAgo } from '@/lib/utils'
 import React from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
 const PostDetails = () => {
     const { id } = useParams()
+    const navigate = useNavigate();
     const { data: post, isPending } = useGetPostById(id || " ");
+    const { mutate: deletePost } = useDeletePost();
+    const handleDeletePost = () => {
+        deletePost({ postId: id||"", imageId: post?.imageId });
+        navigate(-1);
+    };
     const { user } = useUserContext();
-    const handleDeletePost = () => { }
     return (
         <div className='post_details-container'>
             {isPending ? <Loader />
@@ -38,7 +44,7 @@ const PostDetails = () => {
                                 </div>
                             </Link>
                             <div className='flex-center gap-1'>
-                                {user.id !== post?.creator.$id &&
+                                {user.id === post?.creator.$id &&
                                     <>
                                         <Link to={`/update-post/${post?.$id}`}>
                                             <img src="/assets/icons/edit.svg" alt="edit" width={24} height={24} />
@@ -59,7 +65,7 @@ const PostDetails = () => {
                             <p>
                                 {post?.caption}
                             </p>
-                            <ul className="flex gap-1 mt-2">
+                            <ul className="flex flex-col flex-1 w-full small-medium lg:base-regular">
                                 {post?.tags.length > 1
                                     ?
                                     post?.tags.map((tag: string) => (
@@ -71,6 +77,10 @@ const PostDetails = () => {
                                     null
                                 }
                             </ul>
+                        </div>
+
+                        <div className='w-full'>
+                            <PostStats post={post || {}} userId={user.id} />
                         </div>
                     </div>
                 </div>
