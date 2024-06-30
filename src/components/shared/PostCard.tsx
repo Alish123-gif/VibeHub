@@ -50,17 +50,23 @@ const PostCard = ({ post }: PostCardProps) => {
                         {post.caption}
                     </p>
                     <ul className="flex gap-1 mt-2">
-                        {post.tags.map((tag: string) => (
-                            <li key={tag} className="text-light-3">
-                                #{tag}
-                            </li>
-                        ))}
+                        {post?.tags.length > 1
+                            ?
+                            post?.tags.map((tag: string) => (
+                                <li key={tag} className="text-light-3">
+                                    #{tag}
+                                </li>
+                            ))
+                            :
+                            null
+                        }
                     </ul>
                 </div>
                 <img
                     src={post.imageUrl || '/assets/icons/profile-placeholder.svg'}
                     alt="post"
-                    className="post-card_img" />
+                    className="post-card_img"
+                />
             </Link>
 
             <PostStats post={post} userId={user.id} />

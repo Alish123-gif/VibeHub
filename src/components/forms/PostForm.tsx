@@ -9,7 +9,7 @@ import FileUploader from "../shared/FileUploader"
 import { useNavigate } from 'react-router-dom'
 import { postValidationSchema } from "@/lib/validation"
 import { Models } from "appwrite"
-import { useCreatePost } from "@/lib/react-query/queriesAndMutations"
+import { useCreatePost, useUpdatePost } from "@/lib/react-query/queriesAndMutations"
 import { useUserContext } from "@/context/AuthContext"
 import { useToast } from "../ui/use-toast"
 import Loader from "../shared/Loader"
@@ -17,14 +17,16 @@ import Loader from "../shared/Loader"
 
 type PostFormProps = {
     post?: Models.Document;
+    action: "Create" | "Update"
 }
 
 
-const PostForm = ({ post }: PostFormProps) => {
+const PostForm = ({ post, action }: PostFormProps) => {
     const { user } = useUserContext();
     const { toast } = useToast();
     const navigate = useNavigate();
     const { mutateAsync: createPost, isPending: isLoadingCreate } = useCreatePost();
+    const { mutateAsync: updatePost, isPending: isLoadingUpdate } = useUpdatePost();
     const form = useForm<z.infer<typeof postValidationSchema>>({
         resolver: zodResolver(postValidationSchema),
         defaultValues: {
@@ -36,7 +38,24 @@ const PostForm = ({ post }: PostFormProps) => {
     })
 
     // 2. Define a submit handler.
-    async function onSubmit(values: z.infer<typeof postValidationSchema>) {
+    async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault();
+        const values = form.getValues(); // Get form values using react-hook-form's getValues() function
+
+        if (post && action === 'Update') {
+            const updatedPost = await updatePost({
+                ...values,
+                postId: post.$id,
+                imageId: post?.imageId,
+                imageUrl: post?.imageUrl
+            })
+            if (!updatePost) {
+                toast({ title: "Please try again" })
+            }
+
+            return navigate(`/posts/${post.$id}`)
+        }
+
         const newPost = await createPost({
             ...values,
             userId: user.id,
@@ -44,11 +63,12 @@ const PostForm = ({ post }: PostFormProps) => {
 
         if (!newPost) toast({ title: 'Please Try Again' })
         navigate('/')
-
     };
+
+
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-9 w-full max-w-5xl">
+            <form onSubmit={onSubmit} className="flex flex-col gap-9 w-full max-w-5xl">
                 <FormField
                     control={form.control}
                     name="caption"
@@ -105,7 +125,7 @@ const PostForm = ({ post }: PostFormProps) => {
                     )}
                 />
                 <div className="flex gap-4 items-center justify-end">
-                    {isLoadingCreate ? (
+                    {(isLoadingCreate || isLoadingUpdate) ? (
                         <div className="flex-center gap-2">
                             <Loader />Posting...
                         </div>) :
@@ -117,8 +137,9 @@ const PostForm = ({ post }: PostFormProps) => {
                             </Button>
                             <Button
                                 type="submit"
-                                className="shad-button_primary whitespace-nowrap">
-                                Submit
+                                className="shad-button_primary whitespace-nowrap"
+                            >
+                                {action == 'Update' ? 'Save' : 'Submit'}
                             </Button>
                         </>
 
