@@ -62,9 +62,9 @@ function SigninForm() {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                {/* <FormLabel>Email</FormLabel> */}
                 <FormControl>
-                  <Input type="email" className="shad-input" {...field} />
+                  <Input placeholder="Your Email" type="email" className="shad-input" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -75,9 +75,9 @@ function SigninForm() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
+                {/* <FormLabel>Password</FormLabel> */}
                 <FormControl>
-                  <Input type="password" className="shad-input" {...field} />
+                  <Input placeholder="Your Password" type="password" className="shad-input" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

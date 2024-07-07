@@ -43,7 +43,7 @@ function SignupForm() {
         if (isLoggedIn) {
             form.reset();
             navigate('/')
-        }else{
+        } else {
             return toast({ title: "Sign in failed. Please try again.", variant: "destructive" })
         }
 
@@ -63,28 +63,15 @@ function SignupForm() {
 
                 <form
                     onSubmit={form.handleSubmit(onSubmit)}
-                    className="flex flex-col gap-2 w-full mt-2">
+                    className="flex flex-col gap-7 w-full mt-5">
                     <FormField
                         control={form.control}
                         name="name"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Name</FormLabel>
+                                {/* <FormLabel>Name</FormLabel> */}
                                 <FormControl>
-                                    <Input type="text" className="shad-input" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="username"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Username</FormLabel>
-                                <FormControl>
-                                    <Input type="text" className="shad-input" {...field} />
+                                    <Input placeholder="Your full name" type="text" className="shad-input" {...field} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -95,9 +82,22 @@ function SignupForm() {
                         name="email"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Email</FormLabel>
+                                {/* <FormLabel>Email</FormLabel> */}
                                 <FormControl>
-                                    <Input type="email" className="shad-input" {...field} />
+                                    <Input placeholder="Example@gmail.com" type="email" className="shad-input" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="username"
+                        render={({ field }) => (
+                            <FormItem>
+                                {/* <FormLabel>Username</FormLabel> */}
+                                <FormControl>
+                                    <Input placeholder="Display name" type="text" className="shad-input" {...field} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -108,9 +108,9 @@ function SignupForm() {
                         name="password"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Password</FormLabel>
+                                {/* <FormLabel>Password</FormLabel> */}
                                 <FormControl>
-                                    <Input type="password" className="shad-input" {...field} />
+                                    <Input placeholder="Password of 8 characters or more" type="password" className="shad-input" {...field} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
