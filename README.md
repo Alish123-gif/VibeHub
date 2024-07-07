@@ -1,30 +1,48 @@
-# React + TypeScript + Vite
+Vibehub
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Welcome to Vibehub, a cutting-edge social media platform built with the latest web technologies to deliver a seamless and engaging user experience.
+Project Overview
 
-Currently, two official plugins are available:
+Vibehub is a social media website designed to connect people and foster communities. It leverages modern tools and libraries to create an intuitive and dynamic interface. Our goal is to provide users with a vibrant space to share their thoughts, images, and videos, while staying connected with friends and followers.
+Tech Stack
+Frontend
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+    React: For building a responsive and interactive user interface.
+    React Router DOM: To handle in-app routing and navigation.
+    React Hook Form: For managing form state and validation.
+    Radix UI: To implement accessible and customizable UI components.
+    Tailwind CSS: For styling and creating a responsive design.
+    Vite: As our build tool for fast development and optimized builds.
 
-## Expanding the ESLint configuration
+Backend
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+    Appwrite: A backend server for managing authentication, databases, storage, and more.
 
-- Configure the top-level `parserOptions` property like this:
+State Management
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
-```
+    TanStack React Query: For fetching, caching, and synchronizing server state.
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+Validation
+
+    Zod: For schema declaration and validation.
+
+Utility Libraries
+
+    Class Variance Authority: For managing class names conditionally.
+    Clsx: For constructing className strings conditionally.
+
+Development Tools
+
+    TypeScript: For static type-checking to improve code quality.
+    ESLint: To ensure code consistency and quality.
+    Prettier: For code formatting.
+    PostCSS: For transforming CSS with JavaScript plugins.
+    TailwindCSS Animate: For adding animations to TailwindCSS.
+
+Key Features
+
+    User Authentication: Secure login and registration using Appwrite.
+    Real-time Updates: Stay up-to-date with the latest posts and interactions.
+    Media Uploads: Share photos and videos with your network.
+    Responsive Design: Enjoy a seamless experience on any device.
+    Form Validation: Robust form handling with React Hook Form and Zod.
