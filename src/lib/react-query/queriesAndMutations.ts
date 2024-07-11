@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
-import { createPost, createUserAccount, deletePost, deleteSavedPost, getCurrentUser, getInfinitePosts, getPostById, getRecentPosts, likePost, savePost, searchPosts, signInAccount, signOutAccount, updatePost } from '../appwrite/api'
+import { commentOnPost, createPost, createUserAccount, deleteComment, deletePost, deleteSavedPost, getComments, getCurrentUser, getInfinitePosts, getPostById, getRecentPosts, getUserById, likePost, savePost, searchPosts, signInAccount, signOutAccount, updatePost } from '../appwrite/api'
 import { INewPost, INewUser, IUpdatePost } from '@/types'
 import { QUERY_KEYS } from './queryKeys'
 
@@ -8,6 +8,13 @@ export const useCreateUserAccount = () => {
         mutationFn: (user: INewUser) => createUserAccount(user)
     })
 }
+export const useGetUserById = (userId: string) => {
+    return useQuery({
+        queryKey: [QUERY_KEYS.GET_USER_BY_ID, userId],
+        queryFn: () => getUserById(userId),
+        enabled: !!userId,
+    });
+};
 export const useCreatePost = () => {
     const queryClient = useQueryClient();
     return useMutation({
@@ -19,6 +26,7 @@ export const useCreatePost = () => {
         },
     });
 };
+
 export const useSignInAccount = () => {
     return useMutation({
         mutationFn: (user: { email: string; password: string }) => signInAccount(user)
@@ -29,6 +37,42 @@ export const useSignOutAccount = () => {
         mutationFn: signOutAccount
     })
 }
+export const useCommentOnPost = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (
+            { postId, comment, userId }
+                : { postId: string; comment: string; userId: string }
+        ) => commentOnPost(postId, comment, userId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: [QUERY_KEYS.COMMENT]
+            })
+        }
+    })
+}
+export const useGetComments = (postId: string) => {
+    return useQuery({
+        queryKey: [QUERY_KEYS.COMMENT],
+        queryFn: () => getComments(postId),
+        enabled: !!postId
+    })
+}
+export const useDeleteComment = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (commentId: string) => deleteComment(commentId),
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({
+                queryKey: [QUERY_KEYS.GET_RECENT_POSTS]
+            })
+            queryClient.invalidateQueries({
+                queryKey: [QUERY_KEYS.COMMENT]
+            })
+        }
+    })
+}
+
 export const useGetRecentPost = () => {
     return useQuery({
         queryKey: [QUERY_KEYS.GET_RECENT_POSTS],
@@ -154,7 +198,7 @@ export const useGetPosts = () => {
 };
 export const useSearchPosts = (searchTerm: string) => {
     return useQuery({
-        queryKey: [QUERY_KEYS.SEARCH_POSTS],
+        queryKey: [QUERY_KEYS.SEARCH_POSTS, searchTerm],
         queryFn: () => searchPosts(searchTerm),
         enabled: !!searchTerm,
     });

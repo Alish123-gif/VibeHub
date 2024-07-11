@@ -55,7 +55,17 @@ export async function signInAccount(user: { email: string, password: string }) {
         const session = await account.createEmailPasswordSession(user.email, user.password);
         return session;
     } catch (error) {
-        console.log(error)
+        // Check if the error is a rate limit exception
+        if (error.message.includes('Rate limit')) {
+            console.error('Rate limit exceeded. Please try again later.');
+            // Optionally, you can return a specific error message or object to the caller
+            return { error: 'Rate limit exceeded. Please try again later.' };
+        } else {
+            // Log other types of errors
+            console.error(error);
+            // Return or throw the error
+            return { error: 'An error occurred. Please try again.' };
+        }
     }
 }
 export async function getCurrentUser() {
@@ -139,7 +149,56 @@ export async function uploadFile(file: File) {
         console.log(error);
     }
 }
+export async function commentOnPost(postId: string, comment: string, userId: string) {
+    try {
+        const newComment = await databases.createDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.commentCollectionId,
+            ID.unique(),
+            {
+                post: postId,
+                Content: comment,
+                user: userId,
+            }
+        );
 
+        if (!newComment) throw Error;
+
+        return newComment;
+    } catch (error) {
+        console.log(error);
+    }
+}
+export async function getComments(postId: string) {
+    try {
+        const comments = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.commentCollectionId,
+            [Query.equal("post", postId), Query.orderDesc('$createdAt')]
+        );
+
+        if (!comments) throw Error;
+
+        return comments;
+    } catch (error) {
+        console.log(error);
+    }
+}
+export async function deleteComment(commentId: string) {
+    try {
+        const statusCode = await databases.deleteDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.commentCollectionId,
+            commentId
+        );
+
+        if (!statusCode) throw Error;
+
+        return { status: "ok" };
+    } catch (error) {
+        console.log(error);
+    }
+}
 export function getFilePreview(fileId: string) {
     try {
         const fileUrl = storage.getFilePreview(
@@ -158,7 +217,21 @@ export function getFilePreview(fileId: string) {
         console.log(error);
     }
 }
+export async function getUserById(userId: string) {
+    try {
+        const user = await databases.getDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.userCollectionId,
+            userId
+        );
 
+        if (!user) throw Error;
+
+        return user;
+    } catch (error) {
+        console.log(error);
+    }
+}
 export async function deleteFile(fileId: string) {
     try {
         await storage.deleteFile(appwriteConfig.storageId, fileId);

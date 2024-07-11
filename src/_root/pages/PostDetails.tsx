@@ -1,4 +1,5 @@
 import Loader from '@/components/shared/Loader'
+import PostComments from '@/components/shared/PostComments'
 import PostStats from '@/components/shared/PostStats'
 import { Button } from '@/components/ui/button'
 import { useUserContext } from '@/context/AuthContext'
@@ -82,9 +83,12 @@ const PostDetails = () => {
                         <div className='w-full'>
                             <PostStats post={post || {}} userId={user.id} />
                         </div>
+                        <PostComments postId={post?.$id} />
                     </div>
                 </div>
             }
+            
+
         </div>
     )
 }

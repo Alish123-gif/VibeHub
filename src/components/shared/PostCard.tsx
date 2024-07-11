@@ -3,6 +3,7 @@ import { timeAgo } from "@/lib/utils"
 import { Models } from "appwrite"
 import { Link } from "react-router-dom"
 import PostStats from "./PostStats"
+import PostComments from "./PostComments"
 
 type PostCardProps = {
     post: Models.Document

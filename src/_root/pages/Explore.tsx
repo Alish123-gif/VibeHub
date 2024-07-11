@@ -1,15 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import useDebounce from '@/hooks/useDebounce';
 import { useGetPosts, useSearchPosts } from '@/lib/react-query/queriesAndMutations';
 import GridPostList from '@/components/shared/GridPostList';
 import SearchResults from '@/components/shared/SearchResults';
 import Loader from '@/components/shared/Loader';
+import { useInView } from 'react-intersection-observer';
 
 const Explore = () => {
   const { data: posts, fetchNextPage, hasNextPage } = useGetPosts();
+  const { ref, inView } = useInView()
   const [search, setSearch] = useState('');
   const debouncedValue = useDebounce(search, 500);
   const { data: searchedPosts, isFetching: isSearching } = useSearchPosts(debouncedValue);
+
+  useEffect(() => {
+    if (inView && !search && hasNextPage) {
+      fetchNextPage();
+    }
+  }, [inView, search]);
 
   if (!posts) {
     return <div className='flex-center w-full h-full'><Loader /></div>;
@@ -55,6 +63,13 @@ const Explore = () => {
           ))
         )}
       </div>
+      {
+        hasNextPage && !search && (
+          <div ref={ref} className='flex-center mt-10'>
+            <Loader />
+          </div>
+        )
+      }
     </div>
   );
 };

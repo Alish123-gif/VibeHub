@@ -1,6 +1,8 @@
 import { z } from "zod"
 
-
+export const commentValidationSchema = z.object({
+    comment: z.string().min(1, { message: 'Too short' }).max(2200),
+})
 export const signupValidationSchema = z.object({
     name: z.string().min(3, { message: 'Too short' }).max(20),
     username: z.string().min(2, { message: 'Too short' }).max(50),
