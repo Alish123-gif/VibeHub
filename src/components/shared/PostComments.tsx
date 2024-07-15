@@ -63,7 +63,7 @@ const PostComments = ({ postId }: { postId: string }) => {
                             className="rounded-full sm:w-6 sm:h-6 w-8 h-8 flex mt-1" />
                         <div>
                             <p className="text-light-4 sm:small-medium tiny-medium ">{comment.user.name} - {timeAgo(comment.$createdAt)}</p>
-                            <p className="text-light-1">{comment.Content}</p>
+                            <p className="text-light-1">{comment.content}</p>
                         </div>
                     </div>
                     {user.id === comment.user.$id && (
