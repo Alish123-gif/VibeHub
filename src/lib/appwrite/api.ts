@@ -157,7 +157,7 @@ export async function commentOnPost(postId: string, comment: string, userId: str
             ID.unique(),
             {
                 post: postId,
-                Content: comment,
+                content: comment,
                 user: userId,
             }
         );
