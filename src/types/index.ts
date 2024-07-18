@@ -38,6 +38,8 @@ export type IUser = {
     email: string;
     imageUrl: string;
     bio: string;
+    followers: string[];
+    following: string[];
 };
 
 export type INewUser = {

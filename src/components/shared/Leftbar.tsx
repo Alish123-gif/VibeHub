@@ -5,7 +5,7 @@ import { sidebarLinks } from "@/constants";
 import { Button } from "@/components/ui/button";
 import { useUserContext, INITIAL_USER } from "@/context/AuthContext";
 import { useSignOutAccount } from "@/lib/react-query/queriesAndMutations";
-import { Loader } from "lucide-react";
+import Loader from "./Loader";
 
 const Leftbar = () => {
   const navigate = useNavigate();

@@ -6,14 +6,14 @@ import {
   useParams,
   useLocation,
 } from "react-router-dom";
-
-
-import { LikedPosts } from "@/_root/pages";
+import { useEffect, useState } from "react";
 import { useUserContext } from "@/context/AuthContext";
 import Loader from "@/components/shared/Loader";
 import { Button } from "@/components/ui/button";
 import GridPostList from "@/components/shared/GridPostList";
-import { useGetUserById } from "@/lib/react-query/queriesAndMutations";
+import { useFollowUser, useGetUserById, useUnfollowUser } from "@/lib/react-query/queriesAndMutations";
+import { Models } from "appwrite";
+import LikedPosts from "./LikedPosts";
 
 interface StabBlockProps {
   value: string | number;
@@ -31,24 +31,48 @@ const Profile = () => {
   const { id } = useParams();
   const { user } = useUserContext();
   const { pathname } = useLocation();
-
+  const [isFollowing, setIsFollowing] = useState(false);
   const { data: currentUser } = useGetUserById(id || "");
+  const { mutate: followUserMutation, isPending:isFollowingProcess } = useFollowUser();
+  const { mutate: unfollowUserMutation, isPending:isUnFollowingProcess } = useUnfollowUser();
 
-  if (!currentUser)
+  useEffect(() => {
+    if (!currentUser) return;
+
+    // Check if currentUser is followed by the logged-in user
+    const isUserFollowing = user.following.some(followedUser => followedUser.followed.$id === currentUser.$id);
+    setIsFollowing(isUserFollowing);
+  }, []);
+
+  const changeFollow = () => {
+    if (isFollowing) {
+      // Unfollow the user
+      const followingRecord = user.following.find(followedUser => followedUser.followed.$id === currentUser.$id);
+      if (followingRecord) {
+        unfollowUserMutation(followingRecord.$id);
+        setIsFollowing(false);
+      }
+    } else {
+      // Follow the user
+      followUserMutation({ userId: user.id, followingId: currentUser.$id });
+      setIsFollowing(true);
+    }
+  }
+
+  if (!currentUser) {
     return (
       <div className="flex-center w-full h-full">
         <Loader />
       </div>
     );
+  }
 
   return (
     <div className="profile-container">
       <div className="profile-inner_container">
         <div className="flex xl:flex-row flex-col max-xl:items-center flex-1 gap-7">
           <img
-            src={
-              currentUser.imageUrl || "/assets/icons/profile-placeholder.svg"
-            }
+            src={currentUser.imageUrl || "/assets/icons/profile-placeholder.svg"}
             alt="profile"
             className="w-28 h-28 lg:h-36 lg:w-36 rounded-full"
           />
@@ -64,8 +88,8 @@ const Profile = () => {
 
             <div className="flex gap-8 mt-10 items-center justify-center xl:justify-start flex-wrap z-20">
               <StatBlock value={currentUser.posts.length} label="Posts" />
-              <StatBlock value={20} label="Followers" />
-              <StatBlock value={20} label="Following" />
+              <StatBlock value={currentUser.follower.length} label="Followers" />
+              <StatBlock value={currentUser.following.length} label="Following" />
             </div>
 
             <p className="small-medium md:base-medium text-center xl:text-left mt-7 max-w-screen-sm">
@@ -77,9 +101,7 @@ const Profile = () => {
             <div className={`${user.id !== currentUser.$id && "hidden"}`}>
               <Link
                 to={`/update-profile/${currentUser.$id}`}
-                className={`h-12 bg-dark-4 px-5 text-light-1 flex-center gap-2 rounded-lg ${
-                  user.id !== currentUser.$id && "hidden"
-                }`}>
+                className={`h-12 bg-dark-4 px-5 text-light-1 flex-center gap-2 rounded-lg ${user.id !== currentUser.$id && "hidden"}`}>
                 <img
                   src={"/assets/icons/edit.svg"}
                   alt="edit"
@@ -92,9 +114,11 @@ const Profile = () => {
               </Link>
             </div>
             <div className={`${user.id === id && "hidden"}`}>
-              <Button type="button" className="shad-button_primary px-8">
-                Follow
-              </Button>
+              {!isFollowingProcess&&!isUnFollowingProcess?
+              <Button onClick={changeFollow} type="button" className="shad-button_primary px-8">
+                {isFollowing ? 'Unfollow' : 'Follow'}
+              </Button>:<Loader/>
+              }
             </div>
           </div>
         </div>
@@ -104,9 +128,7 @@ const Profile = () => {
         <div className="flex max-w-5xl w-full">
           <Link
             to={`/profile/${id}`}
-            className={`profile-tab rounded-l-lg ${
-              pathname === `/profile/${id}` && "!bg-dark-3"
-            }`}>
+            className={`profile-tab rounded-l-lg ${pathname === `/profile/${id}` && "!bg-dark-3"}`}>
             <img
               src={"/assets/icons/posts.svg"}
               alt="posts"
@@ -117,9 +139,7 @@ const Profile = () => {
           </Link>
           <Link
             to={`/profile/${id}/liked-posts`}
-            className={`profile-tab rounded-r-lg ${
-              pathname === `/profile/${id}/liked-posts` && "!bg-dark-3"
-            }`}>
+            className={`profile-tab rounded-r-lg ${pathname === `/profile/${id}/liked-posts` && "!bg-dark-3"}`}>
             <img
               src={"/assets/icons/like.svg"}
               alt="like"

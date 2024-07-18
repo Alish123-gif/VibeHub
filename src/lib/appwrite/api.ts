@@ -414,3 +414,37 @@ export async function searchPosts(searchTerm: string) {
         console.log(error);
     }
 }
+export async function followUser(userId: string, followingId: string) {
+    try {
+        const newFollow = await databases.createDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.followCollectionId,
+            ID.unique(),
+            {
+                follower: userId,
+                followed: followingId,
+            }
+        );
+
+        if (!newFollow) throw Error;
+
+        return newFollow;
+    } catch (error) {
+        console.log(error);
+    }
+}
+export async function unfollowUser(followDocId: string) {
+    try {
+        const statusCode = await databases.deleteDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.followCollectionId,
+            followDocId
+        );
+
+        if (!statusCode) throw Error;
+
+        return { status: "ok" };
+    } catch (error) {
+        console.log(error);
+    }
+}
