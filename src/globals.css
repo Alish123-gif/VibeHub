@@ -273,7 +273,7 @@
   }
 
   .shad-button_dark_4 {
-    @apply  bg-red text-light-1 flex gap-2 !important;
+    @apply bg-red text-light-1 flex gap-2 !important;
   }
 
   .shad-button_ghost {
