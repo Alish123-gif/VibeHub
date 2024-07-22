@@ -1,5 +1,5 @@
 import { INewPost, INewUser, IUpdatePost } from "@/types";
-import { ID, Query } from "appwrite";
+import { ID, Models, Query } from "appwrite";
 import { avatars, account, databases, appwriteConfig, storage } from "./Config";
 
 
@@ -448,3 +448,19 @@ export async function unfollowUser(followDocId: string) {
         console.log(error);
     }
 }
+export async function getUsers() {
+    try {
+      const users = await databases.listDocuments(
+        appwriteConfig.databaseId,
+        appwriteConfig.userCollectionId,
+        [Query.orderDesc("$createdAt")]
+      );
+  
+      if (!users) throw Error;
+  
+      return users;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  

@@ -6,21 +6,14 @@ import {
   useParams,
   useLocation,
 } from "react-router-dom";
-import { useEffect, useState } from "react";
 import { useUserContext } from "@/context/AuthContext";
 import Loader from "@/components/shared/Loader";
-import { Button } from "@/components/ui/button";
 import GridPostList from "@/components/shared/GridPostList";
-import { useFollowUser, useGetUserById, useUnfollowUser } from "@/lib/react-query/queriesAndMutations";
-import { Models } from "appwrite";
+import { useGetUserById } from "@/lib/react-query/queriesAndMutations";
 import LikedPosts from "./LikedPosts";
+import FollowButton from "@/components/shared/FollowButton";
 
-interface StabBlockProps {
-  value: string | number;
-  label: string;
-}
-
-const StatBlock = ({ value, label }: StabBlockProps) => (
+const StatBlock = ({ value, label }) => (
   <div className="flex-center gap-2">
     <p className="small-semibold lg:body-bold text-primary-500">{value}</p>
     <p className="small-medium lg:base-medium text-light-2">{label}</p>
@@ -31,33 +24,7 @@ const Profile = () => {
   const { id } = useParams();
   const { user } = useUserContext();
   const { pathname } = useLocation();
-  const [isFollowing, setIsFollowing] = useState(false);
   const { data: currentUser } = useGetUserById(id || "");
-  const { mutate: followUserMutation, isPending:isFollowingProcess } = useFollowUser();
-  const { mutate: unfollowUserMutation, isPending:isUnFollowingProcess } = useUnfollowUser();
-
-  useEffect(() => {
-    if (!currentUser) return;
-
-    // Check if currentUser is followed by the logged-in user
-    const isUserFollowing = user.following.some(followedUser => followedUser.followed.$id === currentUser.$id);
-    setIsFollowing(isUserFollowing);
-  }, []);
-
-  const changeFollow = () => {
-    if (isFollowing) {
-      // Unfollow the user
-      const followingRecord = user.following.find(followedUser => followedUser.followed.$id === currentUser.$id);
-      if (followingRecord) {
-        unfollowUserMutation(followingRecord.$id);
-        setIsFollowing(false);
-      }
-    } else {
-      // Follow the user
-      followUserMutation({ userId: user.id, followingId: currentUser.$id });
-      setIsFollowing(true);
-    }
-  }
 
   if (!currentUser) {
     return (
@@ -78,87 +45,45 @@ const Profile = () => {
           />
           <div className="flex flex-col flex-1 justify-between md:mt-2">
             <div className="flex flex-col w-full">
-              <h1 className="text-center xl:text-left h3-bold md:h1-semibold w-full">
-                {currentUser.name}
-              </h1>
-              <p className="small-regular md:body-medium text-light-3 text-center xl:text-left">
-                @{currentUser.username}
-              </p>
+              <h1 className="text-center xl:text-left h3-bold md:h1-semibold w-full">{currentUser.name}</h1>
+              <p className="small-regular md:body-medium text-light-3 text-center xl:text-left">@{currentUser.username}</p>
             </div>
-
             <div className="flex gap-8 mt-10 items-center justify-center xl:justify-start flex-wrap z-20">
               <StatBlock value={currentUser.posts.length} label="Posts" />
               <StatBlock value={currentUser.follower.length} label="Followers" />
               <StatBlock value={currentUser.following.length} label="Following" />
             </div>
-
             <p className="small-medium md:base-medium text-center xl:text-left mt-7 max-w-screen-sm">
               {currentUser.bio}
             </p>
           </div>
-
           <div className="flex justify-center gap-4">
-            <div className={`${user.id !== currentUser.$id && "hidden"}`}>
-              <Link
-                to={`/update-profile/${currentUser.$id}`}
-                className={`h-12 bg-dark-4 px-5 text-light-1 flex-center gap-2 rounded-lg ${user.id !== currentUser.$id && "hidden"}`}>
-                <img
-                  src={"/assets/icons/edit.svg"}
-                  alt="edit"
-                  width={20}
-                  height={20}
-                />
-                <p className="flex whitespace-nowrap small-medium">
-                  Edit Profile
-                </p>
+            {user.id !== currentUser.$id ? (
+              <FollowButton currentUser={currentUser} />
+            ) : (
+              <Link to={`/update-profile/${currentUser.$id}`} className="h-12 bg-dark-4 px-5 text-light-1 flex-center gap-2 rounded-lg">
+                <img src={"/assets/icons/edit.svg"} alt="edit" width={20} height={20} />
+                <p className="flex whitespace-nowrap small-medium">Edit Profile</p>
               </Link>
-            </div>
-            <div className={`${user.id === id && "hidden"}`}>
-              {!isFollowingProcess&&!isUnFollowingProcess?
-              <Button onClick={changeFollow} type="button" className="shad-button_primary px-8">
-                {isFollowing ? 'Unfollow' : 'Follow'}
-              </Button>:<Loader/>
-              }
-            </div>
+            )}
           </div>
         </div>
       </div>
-
       {currentUser.$id === user.id && (
         <div className="flex max-w-5xl w-full">
-          <Link
-            to={`/profile/${id}`}
-            className={`profile-tab rounded-l-lg ${pathname === `/profile/${id}` && "!bg-dark-3"}`}>
-            <img
-              src={"/assets/icons/posts.svg"}
-              alt="posts"
-              width={20}
-              height={20}
-            />
+          <Link to={`/profile/${id}`} className={`profile-tab rounded-l-lg ${pathname === `/profile/${id}` && "!bg-dark-3"}`}>
+            <img src={"/assets/icons/posts.svg"} alt="posts" width={20} height={20} />
             Posts
           </Link>
-          <Link
-            to={`/profile/${id}/liked-posts`}
-            className={`profile-tab rounded-r-lg ${pathname === `/profile/${id}/liked-posts` && "!bg-dark-3"}`}>
-            <img
-              src={"/assets/icons/like.svg"}
-              alt="like"
-              width={20}
-              height={20}
-            />
+          <Link to={`/profile/${id}/liked-posts`} className={`profile-tab rounded-r-lg ${pathname === `/profile/${id}/liked-posts` && "!bg-dark-3"}`}>
+            <img src={"/assets/icons/like.svg"} alt="like" width={20} height={20} />
             Liked Posts
           </Link>
         </div>
       )}
-
       <Routes>
-        <Route
-          index
-          element={<GridPostList posts={currentUser.posts} showUser={false} />}
-        />
-        {currentUser.$id === user.id && (
-          <Route path="/liked-posts" element={<LikedPosts />} />
-        )}
+        <Route index element={<GridPostList posts={currentUser.posts} showUser={false} />} />
+        {currentUser.$id === user.id && <Route path="/liked-posts" element={<LikedPosts />} />}
       </Routes>
       <Outlet />
     </div>

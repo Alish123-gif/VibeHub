@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
-import { commentOnPost, createPost, createUserAccount, deleteComment, deletePost, deleteSavedPost, followUser, getComments, getCurrentUser, getInfinitePosts, getPostById, getRecentPosts, getUserById, likePost, savePost, searchPosts, signInAccount, signOutAccount, unfollowUser, updatePost } from '../appwrite/api'
+import { commentOnPost, createPost, createUserAccount, deleteComment, deletePost, deleteSavedPost, followUser, getComments, getCurrentUser, getInfinitePosts, getPostById, getRecentPosts, getUserById, getUsers, likePost, savePost, searchPosts, signInAccount, signOutAccount, unfollowUser, updatePost } from '../appwrite/api'
 import { INewPost, INewUser, IUpdatePost } from '@/types'
 import { QUERY_KEYS } from './queryKeys'
 
@@ -210,13 +210,14 @@ export const useFollowUser = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: [QUERY_KEYS.GET_USER_BY_ID]
-            })
+            });
             queryClient.invalidateQueries({
-                queryKey: [QUERY_KEYS.GET_CURRENT_USER],
+                queryKey: [QUERY_KEYS.GET_CURRENT_USER]
             });
         }
-    })
-}
+    });
+};
+
 export const useUnfollowUser = () => {
     const queryClient = useQueryClient();
     return useMutation({
@@ -224,10 +225,17 @@ export const useUnfollowUser = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: [QUERY_KEYS.GET_USER_BY_ID]
-            })
+            });
             queryClient.invalidateQueries({
-                queryKey: [QUERY_KEYS.GET_CURRENT_USER],
+                queryKey: [QUERY_KEYS.GET_CURRENT_USER]
             });
         }
-    })
-}
+    });
+};
+
+export const useGetUsers = (limit?: number) => {
+    return useQuery({
+        queryKey: [QUERY_KEYS.GET_USERS],
+        queryFn: () => getUsers(limit),
+    });
+};
