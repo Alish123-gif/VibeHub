@@ -12,20 +12,20 @@ const FollowButton = ({ currentUser }: { currentUser: Models.Document }) => {
 
   useEffect(() => {
     if (!currentUser) return;
-    const isUserFollowing = user?.following.some((followedUser) => followedUser.followed.$id === currentUser.$id);
+    const isUserFollowing = user?.following.some((followedUser: Models.Document) => followedUser.followed.$id === currentUser.$id);
     setIsFollowing(isUserFollowing);
   }, []);
 
   const changeFollow = () => {
     if (isFollowing) {
-      const followingRecord = user?.following.find(followedUser => followedUser.followed.$id === currentUser.$id);
+      const followingRecord = user?.following.find((followedUser: Models.Document) => followedUser.followed.$id === currentUser.$id);
       if (followingRecord) {
         unfollowUserMutation(followingRecord.$id);
         setIsFollowing(false);
         return;
       }
     } else {
-      followUserMutation({ userId: user?.$id, followingId: currentUser.$id });
+      followUserMutation({ userId: user?.$id ? user?.$id : " ", followingId: currentUser.$id });
       setIsFollowing(true);
     }
   };
