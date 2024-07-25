@@ -132,7 +132,7 @@
   }
 
   .explore-search {
-    @apply xl:h-12 h-9 bg-dark-4 border-none placeholder:text-light-4 focus-visible:ring-0 focus-visible:ring-offset-0 ring-offset-0 !important;
+    @apply xl:h-12 h-9 bg-dark-4 border-none placeholder:text-light-4 focus-visible:outline-none !important;
   }
 
   /* Home */

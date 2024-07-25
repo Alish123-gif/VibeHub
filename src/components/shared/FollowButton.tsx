@@ -3,9 +3,11 @@ import { Button } from "@/components/ui/button";
 import Loader from "@/components/shared/Loader";
 import { useFollowUser, useGetCurrentUser, useUnfollowUser } from "@/lib/react-query/queriesAndMutations";
 import { Models } from "appwrite";
+import { useToast } from "../ui/use-toast";
 
 const FollowButton = ({ currentUser }: { currentUser: Models.Document }) => {
   const { data: user } = useGetCurrentUser();
+  const { toast } = useToast();
   const [isFollowing, setIsFollowing] = useState(false);
   const { mutate: followUserMutation, isPending: isFollowingProcess } = useFollowUser();
   const { mutate: unfollowUserMutation, isPending: isUnFollowingProcess } = useUnfollowUser();
@@ -25,7 +27,8 @@ const FollowButton = ({ currentUser }: { currentUser: Models.Document }) => {
         return;
       }
     } else {
-      followUserMutation({ userId: user?.$id ? user?.$id : " ", followingId: currentUser.$id });
+      if (!user?.$id) return (toast({ title: "Followed failed. Please Refresh and try again.", variant: "destructive" }));
+      followUserMutation({ userId: user?.$id, followingId: currentUser.$id });
       setIsFollowing(true);
     }
   };

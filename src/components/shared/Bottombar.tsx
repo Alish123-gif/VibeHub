@@ -1,6 +1,5 @@
 import { bottombarLinks } from '@/constants';
 import { INavLink } from '@/types';
-import React from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 
 function Bottombar() {
@@ -25,7 +24,6 @@ function Bottombar() {
             />
             <p className='small-medium text-light-2'>{link.label}</p>
           </Link>
-
         )
       })}
     </section>
