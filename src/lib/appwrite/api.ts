@@ -53,6 +53,7 @@ export async function saveUserToDB(user: {
 export async function signInAccount(user: { email: string, password: string }) {
     try {
         const session = await account.createEmailPasswordSession(user.email, user.password);
+
         return session;
     } catch (error) {
         // Check if the error is a rate limit exception
@@ -242,6 +243,7 @@ export async function deleteFile(fileId: string) {
     }
 }
 export async function getRecentPosts() {
+    
     const posts = await databases.listDocuments(
         appwriteConfig.databaseId,
         appwriteConfig.postCollectionId,

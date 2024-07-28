@@ -6,9 +6,10 @@ import FollowButton from "./FollowButton";
 
 type UserCardProps = {
   user: Models.Document;
+  follow: boolean;
 };
 
-const UserCard = ({ user }: UserCardProps) => {
+const UserCard = ({ user, follow }: UserCardProps) => {
   return (
     <div className="user-card">
       <Link to={`/profile/${user.$id}`} className="flex-center flex-col gap-4">
@@ -27,7 +28,7 @@ const UserCard = ({ user }: UserCardProps) => {
           </p>
         </div>
       </Link>
-      <FollowButton currentUser={user} />
+      {follow ? <FollowButton currentUser={user} /> : ""}
     </div>
   );
 };

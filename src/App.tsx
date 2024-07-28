@@ -24,6 +24,7 @@ function App() {
                     <Route path="/explore" element={<Explore />} />
                     <Route path="/saved" element={<Saved />} />
                     <Route path="/all-users" element={<AllUsers />} />
+                    <Route path="/all-users/:id" element={<AllUsers />} />
                     <Route path="/create-post" element={<CreatePost />} />
                     <Route path="/update-post/:id" element={<EditPost />} />
                     <Route path="/posts/:id" element={<PostDetails />} />

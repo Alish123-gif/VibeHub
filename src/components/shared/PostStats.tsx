@@ -1,6 +1,6 @@
 import { Models } from "appwrite";
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 import { checkIsLiked } from "@/lib/utils";
 import {
@@ -18,7 +18,7 @@ type PostStatsProps = {
 const PostStats = ({ post, userId }: PostStatsProps) => {
   const location = useLocation();
   const likesList = post?.likes.map((user: Models.Document) => user.$id);
-
+  const likeToDisplay = post?.likes[0]?.name;
   const [likes, setLikes] = useState<string[]>(likesList);
   const [isSaved, setIsSaved] = useState(false);
 
@@ -77,8 +77,8 @@ const PostStats = ({ post, userId }: PostStatsProps) => {
       <div className="flex gap-2 mr-5">
         <img
           src={`${checkIsLiked(likes, userId)
-              ? "/assets/icons/liked.svg"
-              : "/assets/icons/like.svg"
+            ? "/assets/icons/liked.svg"
+            : "/assets/icons/like.svg"
             }`}
           alt="like"
           width={20}
@@ -87,6 +87,7 @@ const PostStats = ({ post, userId }: PostStatsProps) => {
           className="cursor-pointer"
         />
         <p className="small-medium lg:base-medium">{likes.length}</p>
+        <Link to={`/all-users/${post.$id}`} state={{ likes }} className="flex items-center text-primary-500 tiny-medium">{likeToDisplay} and {likes.length - 1} others</Link>
       </div>
 
       <div className="flex gap-2">
