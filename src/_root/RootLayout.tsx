@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 
 import Topbar from '@/components/shared/Topbar';
@@ -6,27 +6,37 @@ import Bottombar from '@/components/shared/Bottombar';
 import Leftbar from '@/components/shared/Leftbar';
 
 const RootLayout = () => {
-  const [prevScrollPos, setPrevScrollPos] = useState(window.pageYOffset);
+  const [prevScrollPos, setPrevScrollPos] = useState(window.scrollY);
   const [showBottombar, setShowBottombar] = useState(true);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollPos = window.pageYOffset;
-      if (prevScrollPos > currentScrollPos) {
-        setShowBottombar(true);
-      } else {
-        setShowBottombar(false);
-      }
-      setPrevScrollPos(currentScrollPos);
-    };
+  const handleScroll = () => {
+    const currentScrollPos = window.scrollY;
+    const scrollableHeight = document.documentElement.scrollHeight - window.innerHeight;
 
-    window.addEventListener('scroll', handleScroll);
+    if (currentScrollPos >= scrollableHeight - 100) {
+      // Hide Bottombar when at the bottom of the page
+      setShowBottombar(false);
+    } else if (prevScrollPos > currentScrollPos) {
+      // Show Bottombar when scrolling up
+      setShowBottombar(true);
+    } else {
+      // Hide Bottombar when scrolling down
+      setShowBottombar(false);
+    }
 
-    // Clean up the event listener on component unmount
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [prevScrollPos]);
+    setPrevScrollPos(currentScrollPos);
+  };
+
+  // Attach scroll event listener directly in the component
+  window.addEventListener('scroll', handleScroll);
+
+  // Clean up the event listener manually when the component is removed
+  const cleanup = () => {
+    window.removeEventListener('scroll', handleScroll);
+  };
+
+  // Use cleanup function in case of component unmount
+  window.addEventListener('beforeunload', cleanup);
 
   return (
     <div className="w-full flex flex-col h-screen">
