@@ -12,6 +12,7 @@ import GridPostList from "@/components/shared/GridPostList";
 import { useGetUserById } from "@/lib/react-query/queriesAndMutations";
 import LikedPosts from "./LikedPosts";
 import FollowButton from "@/components/shared/FollowButton";
+import Saved from "./Saved";
 
 const StatBlock = ({ value, label }) => (
   <div className="flex-center gap-2">
@@ -79,11 +80,16 @@ const Profile = () => {
             <img src={"/assets/icons/like.svg"} alt="like" width={20} height={20} />
             Liked Posts
           </Link>
+          <Link to={`/profile/${id}/saved`} className={`profile-tab rounded-r-lg ${pathname === `/profile/${id}/saved` && "!bg-dark-3"}`}>
+            <img src={"/assets/icons/bookmark.svg"} alt="Saved" width={20} height={20} />
+            Saved
+          </Link>
         </div>
       )}
       <Routes>
         <Route index element={<GridPostList posts={currentUser.posts} showUser={false} />} />
         {currentUser.$id === user.id && <Route path="/liked-posts" element={<LikedPosts />} />}
+        {currentUser.$id === user.id && <Route path={`/saved`} element={<Saved />} />}
       </Routes>
       <Outlet />
     </div>

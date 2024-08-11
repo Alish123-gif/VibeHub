@@ -5,7 +5,7 @@ import { useGetCurrentUser } from "@/lib/react-query/queriesAndMutations";
 
 const LikedPosts = () => {
   const { data: currentUser } = useGetCurrentUser();
-
+  
   if (!currentUser)
     return (
       <div className="flex-center w-full h-full">

@@ -17,7 +17,7 @@ const Topbar = () => {
   return (
     <section className="topbar">
       <div className="flex-between py-4 px-5">
-        <Link to="/" className="flex gap-3 items-center">
+        <Link to="/" className="flex items-center">
           <img
             src="/assets/images/logo.svg"
             alt="logo"
@@ -26,13 +26,18 @@ const Topbar = () => {
           />
         </Link>
 
-        <div className="flex gap-4">
+        <div className="flex gap-3 items-center">
           <Button
-            variant="ghost"
-            className="shad-button_ghost"
+            className="shad-button_ghost px-0"
             onClick={() => signOut()}>
             <img src="/assets/icons/logout.svg" alt="logout" />
           </Button>
+          <Link to="/chat">
+            <img 
+            src="/assets/icons/chat.svg" 
+            className="h-6 w-6"
+            alt="chat" />
+          </Link>
           <Link to={`/profile/${user.id}`} className="flex-center gap-3">
             <img
               src={user.imageUrl || "/assets/icons/profile-placeholder.svg"}
