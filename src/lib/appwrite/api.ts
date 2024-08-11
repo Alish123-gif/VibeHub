@@ -578,3 +578,18 @@ export async function createChat(chat: { name: string; members: string[] }) {
         console.error(error);
     }
 }
+export async function likeMessage(messageId: string, like: boolean) {
+    try {
+        const response = await databases.updateDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.messagesCollectionId,
+            messageId,
+            {
+                likes: like,
+            }
+        );
+        return response;
+    } catch (error) {
+        console.error(error);
+    }
+}

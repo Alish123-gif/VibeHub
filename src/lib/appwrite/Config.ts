@@ -37,6 +37,19 @@ export const subscribeToUpdate = (user: IUser, onMessageReceived: (message: any)
     });
     return subscription;
 };
+export const subscribeToMessages = (user: IUser, handleLikeUpdate: (message: any) => void) => {
+    const subscription = client.subscribe(`databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.messagesCollectionId}.documents`, response => {
+        if (user) {
+            const updatedMessage = {
+                id: response.payload.$id,
+                likes: response.payload.likes // Ensure this is part of the payload
+            };
+            console.log(updatedMessage);
+            handleLikeUpdate(updatedMessage);
+        }
+    });
+    return subscription;
+}
 
 
 export const account = new Account(client);

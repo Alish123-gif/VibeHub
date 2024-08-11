@@ -17,23 +17,23 @@ import { Input } from "@/components/ui/input";
 import { chatValidationSchema } from '@/lib/validation';
 import { toast } from '../ui/use-toast';
 import { useParams } from 'react-router-dom';
-import { useCreateChatMessage, useGetChatMessages } from '@/lib/react-query/queriesAndMutations';
+import { useCreateChatMessage, useGetChatMessages, useLikeMessage } from '@/lib/react-query/queriesAndMutations';
 import Loader from './Loader';
 import { timeAgo } from '@/lib/utils';
 import { useUserContext } from '@/context/AuthContext';
-import { subscribeToUpdate } from '@/lib/appwrite/Config';
+import { subscribeToMessages, subscribeToUpdate } from '@/lib/appwrite/Config';
 
 const ChatRoom = () => {
     const { id } = useParams<{ id: string }>();
     const { user } = useUserContext();
     const { mutate: sendMessage, isPending: isSending } = useCreateChatMessage();
+    const { mutate: likeMessage } = useLikeMessage();
 
     const [messages, setMessages] = useState<any[]>([]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     if (!id) return null;
 
     const { data: chat, isPending } = useGetChatMessages(id);
-
     const form = useForm<z.infer<typeof chatValidationSchema>>({
         resolver: zodResolver(chatValidationSchema),
         defaultValues: {
@@ -51,17 +51,38 @@ const ChatRoom = () => {
         });
         form.reset();
     }
-
+    function onLike(messageId: string, like: boolean) {
+        likeMessage({ messageId, like });
+    }
     useEffect(() => {
         if (user) {
             const handleMessageReceived = (message: any) => {
                 setMessages(prevMessages => [...prevMessages, message]);
             };
+            const handleLikeUpdate = (like: any) => {
+                console.log(like);
+                setMessages(prevMessages => {
+                    // Find the index of the message being updated
+                    const index = prevMessages.findIndex(m => m.$id === like.id);
+                    console.log(messages);
+
+                    if (index !== -1) {
+                        // Update the existing message
+                        const updatedMessages = [...prevMessages];
+                        updatedMessages[index].likes = like.likes;
+                        return updatedMessages;
+                    }
+                    return prevMessages;
+                });
+            };
+
 
             const subscription = subscribeToUpdate(user, handleMessageReceived);
+            const sub = subscribeToMessages(user, handleLikeUpdate);
 
             return () => {
                 subscription(); // Clean up the subscription on unmount
+                sub();
             };
         }
     }, [user]);
@@ -91,11 +112,11 @@ const ChatRoom = () => {
                                     <p className='text-right small-medium'>{timeAgo(message.$createdAt)}</p>
                                 </div>
                                 <img
-                                    src={"/assets/icons/like.svg"}
+                                    src={`/assets/icons/like${message.likes ? 'd' : ''}.svg`}
                                     alt="like"
                                     width={20}
                                     height={20}
-                                    onClick={() => { }}
+                                    onClick={() => onLike(message.$id, !message.likes)}
                                     className="cursor-pointer"
                                 />
                             </div>
