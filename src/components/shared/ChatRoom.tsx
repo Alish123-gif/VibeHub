@@ -100,26 +100,40 @@ const ChatRoom = () => {
     }, [chat]);
 
     return (
-        <div className='flex flex-col sm:h-screen h-[76vh] w-full'>
+        <div className='flex flex-col sm:h-screen h-full w-full'>
             <div className='flex-1 overflow-y-auto p-4 self-start w-full'>
                 {isPending ? <Loader /> : (
                     <>
                         {messages.map(message => (
-                            <div key={message.$id} className='flex justify-start gap-2 mb-2'>
+                            <div key={message.$id} className={`flex ${message.sender.$id === user.id ? 'justify-end' : 'justify-start'} gap-2 mb-2`}>
+                                {message.sender.$id === user.id && (
+                                    <img
+                                        src={`/assets/icons/like${message.likes ? 'd' : ''}.svg`}
+                                        alt="like"
+                                        width={20}
+                                        height={20}
+                                        onClick={() => onLike(message.$id, !message.likes)}
+                                        className="cursor-pointer"
+                                    />
+                                )}
                                 <div className='bg-dark-4 p-2 rounded-lg'>
-                                    <p className='base-medium text-primary-500'>{message.sender.name}</p>
+                                    <p className={`base-medium text-primary-500`}>{message.sender.name}</p>
                                     <p className='text-white p-4 py-2'>{message.content}</p>
-                                    <p className='text-right small-medium'>{timeAgo(message.$createdAt)}</p>
+                                    <p className={`${message.sender.$id === user.id ? 'text-left' : 'text-right'}  small-medium`}>{timeAgo(message.$createdAt)}</p>
                                 </div>
-                                <img
-                                    src={`/assets/icons/like${message.likes ? 'd' : ''}.svg`}
-                                    alt="like"
-                                    width={20}
-                                    height={20}
-                                    onClick={() => onLike(message.$id, !message.likes)}
-                                    className="cursor-pointer"
-                                />
+                                {message.sender.$id !== user.id && (
+                                    <img
+                                        src={`/assets/icons/like${message.likes ? 'd' : ''}.svg`}
+                                        alt="like"
+                                        width={20}
+                                        height={20}
+                                        onClick={() => onLike(message.$id, !message.likes)}
+                                        className="cursor-pointer"
+                                    />
+                                )}
                             </div>
+
+
                         ))}
                         <div ref={messagesEndRef} /> {/* This div is used to scroll to the bottom */}
                     </>
@@ -153,7 +167,7 @@ const ChatRoom = () => {
                     </form>
                 </Form>
             </div>
-        </div>
+        </div >
     );
 };
 
