@@ -12,7 +12,8 @@ export const INITIAL_USER = {
     imageUrl: "",
     bio: '',
     followers: [],
-    following: []
+    following: [],
+    chatIds:[]
 };
 const INITIAL_STATE = {
     user: INITIAL_USER,
@@ -33,10 +34,13 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const navigate = useNavigate();
     const checkAuthUser = async () => {
         try {
-            setIsLoading(true)
+            setIsLoading(true);
             const currentAccount = await getCurrentUser();
-            if (!currentAccount) return false
 
+            if (!currentAccount) return false;
+
+            // Extract chat IDs from the array of chat objects
+            const chatIds = currentAccount.chats.map((chat: { $id: string }) => chat.$id);
             setUser({
                 id: currentAccount.$id,
                 name: currentAccount.name,
@@ -46,21 +50,23 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 bio: currentAccount.bio,
                 followers: currentAccount.followers,
                 following: currentAccount.following,
-            })
+                chatIds: chatIds // Include chatIds in state
+            });
 
             setIsAuthenticated(true);
-            return true
+            return true;
         } catch (error) {
-            console.log(error)
-            return false
+            console.log(error);
+            return false;
         } finally {
             setIsLoading(false);
         }
     };
+
     useEffect(() => {
         if (
-            localStorage.getItem('cookieFallback') === '[]' 
-            ||localStorage.getItem('cookieFallback') === null
+            localStorage.getItem('cookieFallback') === '[]'
+            || localStorage.getItem('cookieFallback') === null
         ) navigate('/sign-in')
 
         checkAuthUser();
