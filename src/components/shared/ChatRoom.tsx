@@ -100,7 +100,7 @@ const ChatRoom = () => {
     }, [chat]);
 
     return (
-        <div className='flex flex-col sm:h-screen h-full w-full'>
+        <div className='flex flex-col sm:h-screen h-[74vh] w-full'>
             <div className='flex-1 overflow-y-auto p-4 self-start w-full'>
                 {isPending ? <Loader /> : (
                     <>
