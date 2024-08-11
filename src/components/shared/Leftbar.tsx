@@ -70,6 +70,8 @@ const Leftbar = () => {
                   <img
                     src={link.imgURL}
                     alt={link.label}
+                    width={24}
+                    height={24}
                     className={`group-hover:invert-white ${
                       isActive && "invert-white"
                     }`}
