@@ -6,14 +6,14 @@ import Leftbar from "@/components/shared/Leftbar";
 
 const RootLayout = () => {
   return (
-    <div className="w-full md:flex">
+    <div className="w-full flex flex-col h-screen">
       <Topbar />
-      <Leftbar />
-
-      <section className="flex flex-1 h-full">
-        <Outlet />
-      </section>
-
+      <div className="flex flex-1">
+        <Leftbar />
+        <main className="flex-1 overflow-hidden">
+          <Outlet />
+        </main>
+      </div>
       <Bottombar />
     </div>
   );

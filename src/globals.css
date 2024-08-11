@@ -189,7 +189,7 @@
 
   /* Bottom bar */
   .bottom-bar {
-    @apply z-50 flex-between w-full sticky bottom-0 rounded-t-[20px] bg-dark-2 px-5 py-4 md:hidden;
+    @apply z-50 flex-between w-full sticky bottom-0 rounded-t-[20px] bg-dark-2 px-5 py-2 md:hidden;
   }
 
   /* File uploader */
@@ -277,6 +277,6 @@
   }
 
   .shad-button_ghost {
-    @apply flex gap-4 items-end justify-start hover:bg-transparent hover:text-white !important;
+    @apply flex items-end justify-start hover:bg-transparent hover:text-white !important;
   }
 }
