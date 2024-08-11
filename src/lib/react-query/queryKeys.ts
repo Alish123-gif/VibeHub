@@ -20,4 +20,8 @@ export enum QUERY_KEYS {
 
     // COMMENT KEYS
     COMMENT = "getComments",
+
+    // CHAT KEYS
+    GET_CHAT_MESSAGES = "getChatMessages",
+    GET_CHAT_BY_USER_ID = "getChatByUserId",
   }

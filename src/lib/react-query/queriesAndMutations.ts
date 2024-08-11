@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
-import { commentOnPost, createPost, createUserAccount, deleteComment, deletePost, deleteSavedPost, followUser, getComments, getCurrentUser, getInfinitePosts, getPostById, getRecentPosts, getUserById, getUsers, likePost, savePost, searchPosts, signInAccount, signOutAccount, unfollowUser, updatePost, updateUser } from '../appwrite/api'
-import { INewPost, INewUser, IUpdatePost, IUpdateUser } from '@/types'
+import { commentOnPost, createChat, createChatMessages, createPost, createUserAccount, deleteComment, deletePost, deleteSavedPost, followUser, getChatMessages, getComments, getCurrentUser, getInfinitePosts, getPostById, getRecentPosts, getUserById, getUsers, likePost, savePost, searchPosts, signInAccount, signOutAccount, unfollowUser, updatePost, updateUser } from '../appwrite/api'
+import { IMessage, INewPost, INewUser, IUpdatePost, IUpdateUser } from '@/types'
 import { QUERY_KEYS } from './queryKeys'
+import { create } from 'domain'
 
 export const useCreateUserAccount = () => {
     return useMutation({
@@ -253,3 +254,28 @@ export const useUpdateUser = () => {
         },
     });
 };
+export const useGetChatMessages = (chatId: string) => {
+    return useQuery({
+        queryKey: [QUERY_KEYS.GET_CHAT_MESSAGES, chatId],
+        queryFn: () => getChatMessages(chatId)
+    });
+}
+export const useCreateChatMessage = () => {
+    return useMutation({
+        mutationFn: (message: IMessage) => createChatMessages(message),
+    });
+};
+export const useCreateChat = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (chat: { name: string, members: string[] }) => createChat(chat),
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: [QUERY_KEYS.GET_CHAT_MESSAGES]
+            });
+        },
+        onError: (error) => {
+            console.error('Mutation error:', error); // Log mutation error
+        }
+    });
+}

@@ -1,6 +1,8 @@
-import { INewPost, INewUser, IUpdatePost, IUpdateUser } from "@/types";
+import { IMessage, INewPost, INewUser, IUpdatePost, IUpdateUser } from "@/types";
 import { ID, Models, Query } from "appwrite";
-import { avatars, account, databases, appwriteConfig, storage } from "./Config";
+import client, { avatars, account, databases, appwriteConfig, storage, messaging } from "./Config";
+
+
 
 
 export async function createUserAccount(user: INewUser) {
@@ -243,7 +245,7 @@ export async function deleteFile(fileId: string) {
     }
 }
 export async function getRecentPosts() {
-    
+
     const posts = await databases.listDocuments(
         appwriteConfig.databaseId,
         appwriteConfig.postCollectionId,
@@ -519,5 +521,60 @@ export async function updateUser(user: IUpdateUser) {
         return updatedUser;
     } catch (error) {
         console.log(error);
+    }
+}
+export async function getChatMessages(chatid: string) {
+    try {
+        const response = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.messagesCollectionId,
+            [Query.equal("chat_id", chatid), Query.orderAsc("$createdAt")]
+        );
+        return response;
+    } catch (error) {
+        console.error(error);
+    }
+}
+export async function createChatMessages(message: IMessage) {
+    try {
+        const response = await databases.createDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.messagesCollectionId,
+            ID.unique(),
+            {
+                chat_id: message.chatid,
+                content: message.content,
+                sender: message.sender.id,
+            }
+        );
+        const chat = await databases.updateDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.chatCollectionId,
+            message.chatid,
+            {
+                last_message: message.content,
+                last_message_time: new Date().toISOString(),
+                last_sender_name: message.sender.name,
+            }
+        )
+        return response;
+    } catch (error) {
+        console.error(error);
+    }
+}
+export async function createChat(chat: { name: string; members: string[] }) {
+    try {
+        const response = await databases.createDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.chatCollectionId,
+            ID.unique(),
+            {
+                name: chat.name,
+                user_id: chat.members,
+            }
+        );
+        return response;
+    } catch (error) {
+        console.error(error);
     }
 }

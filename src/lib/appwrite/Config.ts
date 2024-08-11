@@ -1,4 +1,5 @@
-import { Client, Account, Databases, Storage, Avatars } from 'appwrite'
+import { IUser } from '@/types';
+import { Client, Account, Databases, Storage, Avatars, Messaging } from 'appwrite'
 
 export const appwriteConfig = {
     projectId: import.meta.env.VITE_APPWRITE_PROJECT_ID,
@@ -10,14 +11,38 @@ export const appwriteConfig = {
     postCollectionId: import.meta.env.VITE_APPWRITE_POST_COLLECTION_ID,
     commentCollectionId: import.meta.env.VITE_APPWRITE_COMMENT_COLLECTION_ID,
     followCollectionId: import.meta.env.VITE_APPWRITE_FOLLOW_COLLECTION_ID,
+    chatCollectionId: import.meta.env.VITE_APPWRITE_CHAT_COLLECTION_ID,
+    messagesCollectionId: import.meta.env.VITE_APPWRITE_MESSAGES_COLLECTION_ID,
 }
 
-export const client = new Client();
+const client = new Client();
 
 client.setProject(appwriteConfig.projectId)
 client.setEndpoint(appwriteConfig.url)
+
+
+export const subscribeToUpdate = (user: IUser, onMessageReceived: (message: any) => void) => {
+    const subscription = client.subscribe(`databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.chatCollectionId}.documents`, response => {
+        if (user && user.chatIds.includes(response.payload.$id)) {
+            const message = {
+                $id: response.payload.$id,
+                content: response.payload.last_message,
+                sender: {
+                    name: response.payload.last_sender_name
+                },
+                $createdAt: response.payload.last_message_time,
+            };
+            onMessageReceived(message);
+        }
+    });
+    return subscription;
+};
+
 
 export const account = new Account(client);
 export const databases = new Databases(client);
 export const storage = new Storage(client);
 export const avatars = new Avatars(client);
+export const messaging = new Messaging(client);
+
+export default client
