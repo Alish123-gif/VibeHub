@@ -529,11 +529,16 @@ export async function getChatMessages(chatid: string) {
         const response = await databases.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.messagesCollectionId,
-            [Query.equal("chat_id", chatid), Query.orderAsc("$createdAt")]
+            [Query.equal("chat_id", chatid), Query.orderDesc("$createdAt")]
         );
-        return response;
+
+        // Reverse the array of documents
+        const reversedDocuments = response.documents.reverse();
+
+        return reversedDocuments;
     } catch (error) {
         console.error(error);
+        throw error; // Optionally rethrow the error if you want to handle it further up
     }
 }
 export async function createChatMessages(message: IMessage) {

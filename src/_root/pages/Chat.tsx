@@ -1,11 +1,17 @@
-import { useCreateChat, useGetChats, useGetCurrentUser } from '@/lib/react-query/queriesAndMutations';
+import { useCreateChat, useGetCurrentUser } from '@/lib/react-query/queriesAndMutations';
 import React from 'react';
 import ChatList from '../../components/shared/ChatList';
 import Loader from '@/components/shared/Loader';
+import { useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/react-query/queryKeys';
 
 const Chat = () => {
     const { data: currentUser } = useGetCurrentUser();
     const { mutate: createChat } = useCreateChat();
+    const queryClient = useQueryClient();
+    queryClient.invalidateQueries({
+        queryKey: [QUERY_KEYS.GET_CHAT_MESSAGES]
+    });
 
     if (!currentUser) {
         return (

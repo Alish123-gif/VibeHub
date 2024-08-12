@@ -31,9 +31,11 @@ const ChatRoom = () => {
 
     const [messages, setMessages] = useState<any[]>([]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    if (!id) return null;
 
+    if (!id) return null;
     const { data: chat, isPending } = useGetChatMessages(id);
+    console.log(chat);
+
     const form = useForm<z.infer<typeof chatValidationSchema>>({
         resolver: zodResolver(chatValidationSchema),
         defaultValues: {
@@ -95,7 +97,7 @@ const ChatRoom = () => {
 
     useEffect(() => {
         if (chat) {
-            setMessages(chat.documents);
+            setMessages(chat);
         }
     }, [chat]);
 

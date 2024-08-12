@@ -256,7 +256,7 @@ export const useUpdateUser = () => {
 };
 export const useGetChatMessages = (chatId: string) => {
     return useQuery({
-        queryKey: [QUERY_KEYS.GET_CHAT_MESSAGES, chatId],
+        queryKey: [QUERY_KEYS.GET_CHAT_MESSAGES],
         queryFn: () => getChatMessages(chatId)
     });
 }
