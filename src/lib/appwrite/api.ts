@@ -1,6 +1,7 @@
 import { IMessage, INewPost, INewUser, IUpdatePost, IUpdateUser } from "@/types";
 import { ID, Models, Query } from "appwrite";
 import client, { avatars, account, databases, appwriteConfig, storage, messaging } from "./Config";
+import { Lasso } from "lucide-react";
 
 
 
@@ -555,6 +556,8 @@ export async function createChatMessages(message: IMessage) {
                 last_message: message.content,
                 last_message_time: new Date().toISOString(),
                 last_sender_name: message.sender.name,
+                last_sender_id: message.sender.id,
+                last_message_id: response.$id,
             }
         )
         return response;

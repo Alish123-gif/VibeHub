@@ -19,7 +19,7 @@ import { toast } from '../ui/use-toast';
 import { useParams } from 'react-router-dom';
 import { useCreateChatMessage, useGetChatMessages, useLikeMessage } from '@/lib/react-query/queriesAndMutations';
 import Loader from './Loader';
-import { timeAgo } from '@/lib/utils';
+import { formatTimeFromString } from '@/lib/utils';
 import { useUserContext } from '@/context/AuthContext';
 import { subscribeToMessages, subscribeToUpdate } from '@/lib/appwrite/Config';
 
@@ -63,7 +63,7 @@ const ChatRoom = () => {
                 console.log(like);
                 setMessages(prevMessages => {
                     // Find the index of the message being updated
-                    const index = prevMessages.findIndex(m => m.$id === like.id);
+                    const index = prevMessages.findIndex(m => m.$id === like.$id);
                     console.log(messages);
 
                     if (index !== -1) {
@@ -119,7 +119,7 @@ const ChatRoom = () => {
                                 <div className='bg-dark-4 p-2 rounded-lg'>
                                     <p className={`base-medium text-primary-500`}>{message.sender.name}</p>
                                     <p className='text-white p-4 py-2'>{message.content}</p>
-                                    <p className={`${message.sender.$id === user.id ? 'text-left' : 'text-right'}  small-medium`}>{timeAgo(message.$createdAt)}</p>
+                                    <p className={`${message.sender.$id === user.id ? 'text-left' : 'text-right'}  tiny-medium`}>{formatTimeFromString(message.$createdAt)}</p>
                                 </div>
                                 {message.sender.$id !== user.id && (
                                     <img

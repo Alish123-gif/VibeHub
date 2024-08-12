@@ -23,14 +23,15 @@ client.setEndpoint(appwriteConfig.url)
 
 export const subscribeToUpdate = (user: IUser, onMessageReceived: (message: any) => void) => {
     const subscription = client.subscribe(`databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.chatCollectionId}.documents`, response => {
-        if (user && user.chatIds.includes(response.payload.$id)) {
+        if (user && user.chatIds.includes((response.payload as { $id: string }).$id)) {
             const message = {
-                $id: response.payload.$id,
-                content: response.payload.last_message,
+                $id: (response.payload as { last_message_id: string }).last_message_id,
+                content: (response.payload as { last_message: string }).last_message,
                 sender: {
-                    name: response.payload.last_sender_name
+                    name: (response.payload as { last_sender_name: string }).last_sender_name,
+                    $id: (response.payload as { last_sender_id: string }).last_sender_id
                 },
-                $createdAt: response.payload.last_message_time,
+                $createdAt: (response.payload as { last_message_time: string }).last_message_time,
             };
             onMessageReceived(message);
         }
@@ -41,8 +42,8 @@ export const subscribeToMessages = (user: IUser, handleLikeUpdate: (message: any
     const subscription = client.subscribe(`databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.messagesCollectionId}.documents`, response => {
         if (user) {
             const updatedMessage = {
-                id: response.payload.$id,
-                likes: response.payload.likes // Ensure this is part of the payload
+                $id: (response.payload as { $id: string }).$id,
+                likes: (response.payload as { likes: string }).likes // Ensure this is part of the payload
             };
             console.log(updatedMessage);
             handleLikeUpdate(updatedMessage);

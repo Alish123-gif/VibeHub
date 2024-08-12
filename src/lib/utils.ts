@@ -17,8 +17,8 @@ export function timeAgo(dateString: string): string {
     { name: "week", seconds: 604800 },
     { name: "day", seconds: 86400 },
     { name: "hour", seconds: 3600 },
-    { name: "minute", seconds: 60 },
-    { name: "second", seconds: 1 },
+    { name: "min", seconds: 60 },
+    { name: "sec", seconds: 1 },
   ];
 
   for (const unit of units) {
@@ -32,3 +32,25 @@ export function timeAgo(dateString: string): string {
 export const checkIsLiked = (likeList: string[], userId: string) => {
   return likeList.includes(userId);
 };
+
+export function formatTimeFromString(dateString: string) {
+  const date = new Date(dateString);
+
+  if (isNaN(date.getTime())) {
+    throw new Error("Invalid date string");
+  }
+
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
+
+  // Determine AM or PM
+  const period = hours >= 12 ? 'PM' : 'AM';
+
+  // Convert hours to 12-hour format
+  const adjustedHours = hours % 12 || 12;
+
+  // Format minutes to always have two digits
+  const formattedMinutes = minutes.toString().padStart(2, '0');
+
+  return `${adjustedHours}:${formattedMinutes} ${period}`;
+}
