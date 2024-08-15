@@ -22,7 +22,6 @@ type PostFormProps = {
 
 
 const PostForm = ({ post, action }: PostFormProps) => {
-    console.log(action)
     const { user } = useUserContext();
     const { toast } = useToast();
     const navigate = useNavigate();
