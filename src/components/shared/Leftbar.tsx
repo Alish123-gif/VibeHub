@@ -25,7 +25,7 @@ const Leftbar = () => {
   };
 
   return (
-    <nav className="leftsidebar">
+    <nav className="fixed top-0 left-0 h-screen w-[270px] bg-dark-2 px-6 py-10 hidden md:flex flex-col justify-between">
       <div className="flex flex-col gap-3">
         <Link to="/" className="flex gap-3 items-center">
           <img
@@ -41,7 +41,7 @@ const Leftbar = () => {
             <Loader />
           </div>
         ) : (
-          <div  className="flex gap-3 items-center justify-between">
+          <div className="flex gap-3 items-center justify-between">
             <Link to={`/profile/${user.id}`}>
               <div className="flex gap-3 items-center">
                 <img
@@ -54,19 +54,15 @@ const Leftbar = () => {
                   <p className="small-regular text-light-3">@{user.username}</p>
                 </div>
               </div>
-
-              <div>
-
-              </div>
             </Link>
-            <Link to="/chat" className="">
+            <Link to="/chat">
               <img
                 src="/assets/icons/chat.svg"
                 className="h-8 w-8"
-                alt="chat" />
+                alt="chat"
+              />
             </Link>
           </div>
-
         )}
 
         <ul className="flex flex-col gap-3 xl:gap-4">
@@ -76,8 +72,7 @@ const Leftbar = () => {
             return (
               <li
                 key={link.label}
-                className={`leftsidebar-link group ${isActive && "bg-primary-500"
-                  }`}>
+                className={`leftsidebar-link group ${isActive && "bg-primary-500"}`}>
                 <NavLink
                   to={link.route}
                   className="flex gap-4 items-center p-4">
@@ -86,8 +81,7 @@ const Leftbar = () => {
                     alt={link.label}
                     width={24}
                     height={24}
-                    className={`group-hover:invert-white ${isActive && "invert-white"
-                      }`}
+                    className={`group-hover:invert-white ${isActive && "invert-white"}`}
                   />
                   {link.label}
                 </NavLink>

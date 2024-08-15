@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 
 import Topbar from '@/components/shared/Topbar';
@@ -15,39 +15,34 @@ const RootLayout = () => {
     const scrollableHeight = document.documentElement.scrollHeight - window.innerHeight;
 
     if (location.pathname.startsWith('/chat/')) {
-      // Hide Bottombar when in a chat route
       setShowBottombar(false);
       return;
     }
 
     if (currentScrollPos >= scrollableHeight - 100) {
-      // Hide Bottombar when at the bottom of the page
       setShowBottombar(false);
     } else if (prevScrollPos > currentScrollPos) {
-      // Show Bottombar when scrolling up
       setShowBottombar(true);
     } else {
-      // Hide Bottombar when scrolling down
       setShowBottombar(false);
     }
 
     setPrevScrollPos(currentScrollPos);
   };
 
-  // Attach scroll event listener directly in the render function
-  window.addEventListener('scroll', handleScroll);
-
-  // Clean up the event listener manually when the component is removed
-  window.addEventListener('beforeunload', () => {
-    window.removeEventListener('scroll', handleScroll);
-  });
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [prevScrollPos, location.pathname]);
 
   return (
-    <div className="w-full flex flex-col h-screen">
+    <div className="flex flex-col h-screen w-full">
       <Topbar />
-      <div className="flex flex-1">
+      <div className="flex h-full">
         <Leftbar />
-        <main className="flex-1 overflow-hidden">
+        <main className="flex-1 md:ml-[270px] h-[calc(100vh-4rem)] max-w-full"> {/* Adjusted margin-left and height */}
           <Outlet />
         </main>
       </div>

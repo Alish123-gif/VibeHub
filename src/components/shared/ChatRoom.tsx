@@ -79,7 +79,7 @@ const ChatRoom = () => {
             };
 
 
-            const subscription = subscribeToUpdate(user, handleMessageReceived);
+            const subscription = subscribeToUpdate(user, id, handleMessageReceived);
             const sub = subscribeToMessages(user, handleLikeUpdate);
 
             return () => {
@@ -102,7 +102,7 @@ const ChatRoom = () => {
     }, [chat]);
 
     return (
-        <div className='flex flex-col sm:h-screen h-[74vh] w-full'>
+        <div className='flex flex-col h-screen'>
             <div className='flex-1 overflow-y-auto p-4 self-start w-full'>
                 {isPending ? <Loader /> : (
                     <>
@@ -143,7 +143,7 @@ const ChatRoom = () => {
             </div>
 
             {/* Input container */}
-            <div className='p-4'>
+            <div className='p-4 sticky bottom-0 bg-black'>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className='flex items-center w-full'>
                         <FormField

@@ -23,7 +23,7 @@ const Chat = () => {
 
 
     return (
-        <div className='w-full px-5'>
+        <div className='px-5'>
             {currentUser.chats.length > 0 ? <ChatList chats={currentUser.chats} /> : <p>No chats</p>}
             <div className='w-full mt-5'>
                 <ul className="w-full mt-5">

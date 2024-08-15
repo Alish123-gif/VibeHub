@@ -18,7 +18,6 @@ type PostStatsProps = {
 const PostStats = ({ post, userId }: PostStatsProps) => {
   const location = useLocation();
   const likesList = post?.likes.map((user: Models.Document) => user.$id);
-  const likeToDisplay = post?.likes[0]?.name;
   const [likes, setLikes] = useState<string[]>(likesList);
   const [isSaved, setIsSaved] = useState(false);
 
@@ -87,7 +86,7 @@ const PostStats = ({ post, userId }: PostStatsProps) => {
           className="cursor-pointer"
         />
         <p className="small-medium lg:base-medium">{likes.length}</p>
-        <Link to={`/all-users/${post.$id}`} state={{ likes }} className="flex items-center text-primary-500 tiny-medium">{likeToDisplay} and {likes.length - 1} others</Link>
+        <Link to={`/all-users/${post.$id}`} state={{ likes }} className="flex items-center text-primary-500 tiny-medium">{likes.length === 1 ? <>by {post?.likes[0]?.name}</> : likes.length === 2 ? <>by {post?.likes[0]?.name} and {post?.likes[1]?.name}</> : <>{post?.likes[0]?.name} and {likes.length - 1} others</>}</Link>
       </div>
 
       <div className="flex gap-2">

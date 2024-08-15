@@ -21,9 +21,9 @@ client.setProject(appwriteConfig.projectId)
 client.setEndpoint(appwriteConfig.url)
 
 
-export const subscribeToUpdate = (user: IUser, onMessageReceived: (message: any) => void) => {
+export const subscribeToUpdate = (user: IUser, chat_id: string, onMessageReceived: (message: any) => void) => {
     const subscription = client.subscribe(`databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.chatCollectionId}.documents`, response => {
-        if (user && user.chatIds.includes((response.payload as { $id: string }).$id)) {
+        if (user && chat_id === (response.payload as { $id: string }).$id) {
             const message = {
                 $id: (response.payload as { last_message_id: string }).last_message_id,
                 content: (response.payload as { last_message: string }).last_message,
