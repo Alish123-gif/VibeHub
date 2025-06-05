@@ -16,12 +16,12 @@ export enum QUERY_KEYS {
     GET_FILE_PREVIEW = "getFilePreview",
   
     //  SEARCH KEYS
-    SEARCH_POSTS = "getSearchPosts",
-
-    // COMMENT KEYS
-    COMMENT = "getComments",
-
-    // CHAT KEYS
+    SEARCH_POSTS = "getSearchPosts",    // COMMENT KEYS
+    COMMENT = "getComments",    // CHAT KEYS
     GET_CHAT_MESSAGES = "getChatMessages",
     GET_CHAT_BY_USER_ID = "getChatByUserId",
+    GET_USER_CONNECTIONS = "getUserConnections",
+    CHECK_EXISTING_CHAT = "checkExistingChat",
+    GET_USER_CHATS = "getUserChats",
+    GET_UNREAD_COUNTS = "getUnreadCounts",
   }
