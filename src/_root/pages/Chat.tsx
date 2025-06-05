@@ -1,17 +1,20 @@
-import { useCreateChat, useGetCurrentUser } from '@/lib/react-query/queriesAndMutations';
-import React from 'react';
+import { useGetCurrentUser, useGetUserChats } from '@/lib/react-query/queriesAndMutations';
+import { useState } from 'react';
 import ChatList from '../../components/shared/ChatList';
 import Loader from '@/components/shared/Loader';
-import { useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/react-query/queryKeys';
+import ChatCreateModal from '@/components/shared/ChatCreateModal';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 
 const Chat = () => {
     const { data: currentUser } = useGetCurrentUser();
-    const { mutate: createChat } = useCreateChat();
-    const queryClient = useQueryClient();
-    queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.GET_CHAT_MESSAGES]
-    });
+    const { data: userChats, isLoading: isLoadingChats, error: chatsError } = useGetUserChats(currentUser?.$id || "");
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    
+    console.log("Current User:", currentUser);
+    console.log("User Chats:", userChats);
+    console.log("Loading:", isLoadingChats);
+    console.log("Error:", chatsError);
 
     if (!currentUser) {
         return (
@@ -21,17 +24,60 @@ const Chat = () => {
         );
     }
 
+    if (isLoadingChats) {
+        return (
+            <div className="flex-center w-full h-full">
+                <Loader />
+            </div>
+        );
+    }
+
+    if (chatsError) {
+        return (
+            <div className="flex-center w-full h-full">
+                <p className="text-light-4">Failed to load chats. Please try again.</p>
+            </div>
+        );
+    }
 
     return (
         <div className='px-5'>
-            {currentUser.chats.length > 0 ? <ChatList chats={currentUser.chats} /> : <p>No chats</p>}
-            <div className='w-full mt-5'>
-                <ul className="w-full mt-5">
-                    <li className="bg-dark-2 p-4 rounded-lg flex justify-center gap-2 cursor-pointer">
-                        <p className='text-light-3 p-2' onClick={() => createChat({ name: "manual", members: [currentUser.$id] })}>+</p>
-                    </li>
-                </ul>
+            <div className="flex justify-between items-center mb-5 mt-5">
+                <h1 className="h2-bold text-left">Messages</h1>
+                <Button
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="flex items-center justify-center gap-2 bg-primary-500 hover:bg-primary-600"
+                >
+                    <Plus className="h-4 w-4" />
+                    New Chat
+                </Button>
             </div>
+
+            {userChats && userChats.length > 0 ? (
+                <ChatList chats={userChats} />
+            ) : (
+                <div className="flex-center flex-col gap-4 py-10">
+                    <img
+                        src="/assets/icons/chat.svg"
+                        alt="No chats"
+                        className="w-16 h-16 opacity-50"
+                    />
+                    <p className="text-light-4 text-center">
+                        No conversations yet. Start chatting with your friends!
+                    </p>
+                    <Button
+                        onClick={() => setIsCreateModalOpen(true)}
+                        className="bg-primary-500 hover:bg-primary-600"
+                    >
+                        Start Your First Chat
+                    </Button>
+                </div>
+            )}
+
+            <ChatCreateModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+            />
         </div>
     );
 }
