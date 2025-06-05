@@ -1,8 +1,7 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
-import { commentOnPost, createChat, createChatMessages, createPost, createUserAccount, deleteComment, deletePost, deleteSavedPost, followUser, getChatMessages, getComments, getCurrentUser, getInfinitePosts, getPostById, getRecentPosts, getUserById, getUsers, likeMessage, likePost, savePost, searchPosts, signInAccount, signOutAccount, unfollowUser, updatePost, updateUser } from '../appwrite/api'
+import { commentOnPost, createChat, createChatMessages, createPost, createUserAccount, deleteComment, deletePost, deleteSavedPost, followUser, getChatMessages, getComments, getCurrentUser, getInfinitePosts, getPostById, getRecentPosts, getUserById, getUsers, likeMessage, likePost, savePost, searchPosts, signInAccount, signOutAccount, unfollowUser, updatePost, updateUser, checkExistingChat, getUserConnections, getUserChats, updateMessageStatus, markChatMessagesAsRead, getUnreadCounts } from '../appwrite/api'
 import { IMessage, INewPost, INewUser, IUpdatePost, IUpdateUser } from '@/types'
 import { QUERY_KEYS } from './queryKeys'
-import { create } from 'domain'
 
 export const useCreateUserAccount = () => {
     return useMutation({
@@ -63,7 +62,7 @@ export const useDeleteComment = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (commentId: string) => deleteComment(commentId),
-        onSuccess: (data) => {
+        onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: [QUERY_KEYS.GET_RECENT_POSTS]
             })
@@ -175,7 +174,7 @@ export const useDeletePost = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: ({ postId, imageId }: { postId: string, imageId: string }) => deletePost(postId, imageId),
-        onSuccess(data) {
+        onSuccess() {
             queryClient.invalidateQueries({
                 queryKey: [QUERY_KEYS.GET_RECENT_POSTS]
             })
@@ -254,33 +253,119 @@ export const useUpdateUser = () => {
         },
     });
 };
-export const useGetChatMessages = (chatId: string) => {
+export const useGetChatMessages = (chatId: string, limit?: number, offset?: number) => {
     return useQuery({
-        queryKey: [QUERY_KEYS.GET_CHAT_MESSAGES],
-        queryFn: () => getChatMessages(chatId)
+        queryKey: [QUERY_KEYS.GET_CHAT_MESSAGES, chatId, limit, offset],
+        queryFn: () => getChatMessages(chatId, limit, offset),
+        enabled: !!chatId
     });
 }
+
+export const useGetUserChats = (userId: string) => {
+    return useQuery({
+        queryKey: [QUERY_KEYS.GET_USER_CHATS, userId],
+        queryFn: () => getUserChats(userId),
+        enabled: !!userId
+    });
+}
+
 export const useCreateChatMessage = () => {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (message: IMessage) => createChatMessages(message),
+        onSuccess: (_, variables) => {
+            // Invalidate chat messages for this specific chat
+            queryClient.invalidateQueries({
+                queryKey: [QUERY_KEYS.GET_CHAT_MESSAGES, variables.chatid]
+            });            // Invalidate user chats to update last message
+            queryClient.invalidateQueries({
+                queryKey: [QUERY_KEYS.GET_USER_CHATS]
+            });
+            // Invalidate unread counts
+            queryClient.invalidateQueries({
+                queryKey: [QUERY_KEYS.GET_UNREAD_COUNTS]
+            });
+        },
+        onError: (error) => {
+            console.error('Error sending message:', error);
+        }
+    });
+}
+
+export const useUpdateMessageStatus = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ messageId, status }: { messageId: string, status: "sent" | "delivered" | "read" }) => 
+            updateMessageStatus(messageId, status),
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: [QUERY_KEYS.GET_CHAT_MESSAGES]
+            });
+            queryClient.invalidateQueries({
+                queryKey: [QUERY_KEYS.GET_UNREAD_COUNTS]
+            });
+        }
+    });
+}
+
+export const useMarkChatMessagesAsRead = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ chatId, userId }: { chatId: string, userId: string }) => 
+            markChatMessagesAsRead(chatId, userId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: [QUERY_KEYS.GET_CHAT_MESSAGES]
+            });
+            queryClient.invalidateQueries({
+                queryKey: [QUERY_KEYS.GET_UNREAD_COUNTS]
+            });
+        }
     });
 };
+
 export const useCreateChat = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (chat: { name: string, members: string[] }) => createChat(chat),
         onSuccess: () => {
+            // Invalidate user chats to show new chat
             queryClient.invalidateQueries({
-                queryKey: [QUERY_KEYS.GET_CHAT_MESSAGES]
+                queryKey: [QUERY_KEYS.GET_USER_CHATS]
+            });
+            // Invalidate current user to update chat list
+            queryClient.invalidateQueries({
+                queryKey: [QUERY_KEYS.GET_CURRENT_USER]
             });
         },
         onError: (error) => {
-            console.error('Mutation error:', error); // Log mutation error
+            console.error('Error creating chat:', error);
         }
     });
 }
 export const useLikeMessage = () => {
     return useMutation({
-        mutationFn: (message: { messageId: string, like: boolean }) => likeMessage(message.messageId, message.like),
+        mutationFn: ({ messageId, userId, like }: { messageId: string, userId: string, like: boolean }) => 
+            likeMessage(messageId, userId, like),
     });
 }
+export const useCheckExistingChat = () => {
+    return useMutation({
+        mutationFn: (userIds: string[]) => checkExistingChat(userIds),
+    });
+};
+export const useGetUserConnections = (userId: string) => {
+    return useQuery({
+        queryKey: [QUERY_KEYS.GET_USER_CONNECTIONS, userId],
+        queryFn: () => getUserConnections(userId),
+        enabled: !!userId,
+    });
+};
+export const useGetUnreadCounts = (userId: string) => {
+    return useQuery({
+        queryKey: [QUERY_KEYS.GET_UNREAD_COUNTS, userId],
+        queryFn: () => getUnreadCounts(userId),
+        enabled: !!userId,
+        refetchInterval: 30000, // Refetch every 30 seconds to keep counts fresh
+    });
+};
