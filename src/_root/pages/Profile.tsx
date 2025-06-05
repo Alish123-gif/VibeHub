@@ -42,7 +42,7 @@ const Profile = () => {
           <img
             src={currentUser.imageUrl || "/assets/icons/profile-placeholder.svg"}
             alt="profile"
-            className="w-28 h-28 lg:h-36 lg:w-36 rounded-full"
+            className="w-28 h-28 lg:h-36 lg:w-36 rounded-full object-scale-down"
           />
           <div className="flex flex-col flex-1 justify-between md:mt-2">
             <div className="flex flex-col w-full">
@@ -63,8 +63,8 @@ const Profile = () => {
               <FollowButton currentUser={currentUser} />
             ) : (
               <Link to={`/update-profile/${currentUser.$id}`} className="h-12 bg-dark-4 px-5 text-light-1 flex-center gap-2 rounded-lg">
-                <img src={"/assets/icons/edit.svg"} alt="edit" width={20} height={20} />
-                <p className="flex whitespace-nowrap small-medium">Edit Profile</p>
+          <img src={"/assets/icons/edit.svg"} alt="edit" width={20} height={20} />
+          <p className="flex whitespace-nowrap small-medium">Edit Profile</p>
               </Link>
             )}
           </div>
