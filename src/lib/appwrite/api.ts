@@ -1,7 +1,6 @@
 import { IMessage, INewPost, INewUser, IUpdatePost, IUpdateUser } from "@/types";
-import { ID, Models, Query } from "appwrite";
-import client, { avatars, account, databases, appwriteConfig, storage, messaging } from "./Config";
-import { Lasso } from "lucide-react";
+import { ID, Query } from "appwrite";
+import { avatars, account, databases, appwriteConfig, storage } from "./Config";
 
 
 
@@ -58,9 +57,9 @@ export async function signInAccount(user: { email: string, password: string }) {
         const session = await account.createEmailPasswordSession(user.email, user.password);
 
         return session;
-    } catch (error) {
+    } catch (error: any) {
         // Check if the error is a rate limit exception
-        if (error.message.includes('Rate limit')) {
+        if (error.message && error.message.includes('Rate limit')) {
             console.error('Rate limit exceeded. Please try again later.');
             // Optionally, you can return a specific error message or object to the caller
             return { error: 'Rate limit exceeded. Please try again later.' };
@@ -105,7 +104,7 @@ export async function createPost(post: INewPost) {
 
         if (!uploadedFile) throw Error;
 
-        // Get file url
+        // Get direct download url to avoid image transformation restrictions
         const fileUrl = getFilePreview(uploadedFile.$id);
         if (!fileUrl) {
             await deleteFile(uploadedFile.$id);
@@ -137,7 +136,8 @@ export async function createPost(post: INewPost) {
 
         return newPost;
     } catch (error) {
-        console.log(error);
+        console.log("Error creating post:", error);
+        return null;
     }
 }
 export async function uploadFile(file: File) {
@@ -150,7 +150,8 @@ export async function uploadFile(file: File) {
 
         return uploadedFile;
     } catch (error) {
-        console.log(error);
+        console.log("Error uploading file:", error);
+        return null;
     }
 }
 export async function commentOnPost(postId: string, comment: string, userId: string) {
@@ -203,22 +204,22 @@ export async function deleteComment(commentId: string) {
         console.log(error);
     }
 }
-export function getFilePreview(fileId: string) {
+export function getFilePreview(fileId: string): string | null {
     try {
-        const fileUrl = storage.getFilePreview(
-            appwriteConfig.storageId,
-            fileId,
-            2000,
-            2000,
-            "top",
-            100
-        );
-
-        if (!fileUrl) throw Error;
-
+        // Construct the file URL manually using Appwrite REST API endpoint
+        // This completely bypasses the SDK and any automatic transformations
+        const baseUrl = appwriteConfig.url; // e.g., 'https://fra.cloud.appwrite.io/v1'
+        const projectId = appwriteConfig.projectId;
+        const storageId = appwriteConfig.storageId;
+        
+        // Construct direct file view URL without any transformation parameters
+        const fileUrl = `${baseUrl}/storage/buckets/${storageId}/files/${fileId}/view?project=${projectId}`;
+        
+        console.log("Generated manual file URL:", fileUrl);
         return fileUrl;
     } catch (error) {
-        console.log(error);
+        console.log("Error constructing file preview URL:", error);
+        return null;
     }
 }
 export async function getUserById(userId: string) {
@@ -239,10 +240,10 @@ export async function getUserById(userId: string) {
 export async function deleteFile(fileId: string) {
     try {
         await storage.deleteFile(appwriteConfig.storageId, fileId);
-
         return { status: "ok" };
     } catch (error) {
-        console.log(error);
+        console.log("Error deleting file:", error);
+        return { status: "error", message: error };
     }
 }
 export async function getRecentPosts() {
@@ -322,24 +323,24 @@ export async function getPostById(postId: string) {
     }
 }
 export async function updatePost(post: IUpdatePost) {
-    const hasFileToIpdate = post.file.length > 0;
+    const hasFileToUpdate = post.file.length > 0;
 
     try {
         // Upload file to appwrite storage
         let image = {
             imageUrl: post.imageUrl,
             imageId: post.imageId,
-        }
-        if (hasFileToIpdate) {
+        };
+        
+        if (hasFileToUpdate) {
             const uploadedFile = await uploadFile(post.file[0]);
-            if (!uploadedFile) throw Error;
-
+            if (!uploadedFile) throw Error;            // Use direct download URL to avoid transformation limitations
             const fileUrl = getFilePreview(uploadedFile.$id);
             if (!fileUrl) {
                 await deleteFile(uploadedFile.$id);
                 throw Error;
             }
-            image = { ...image, imageUrl: fileUrl, imageId: uploadedFile.$id }
+            image = { ...image, imageUrl: fileUrl as any, imageId: uploadedFile.$id };
         }
 
         const tags = post.tags?.replace(/ /g, "").split(",") || [];
@@ -358,13 +359,16 @@ export async function updatePost(post: IUpdatePost) {
         );
 
         if (!updatedPost) {
-            await deleteFile(post.imageId);
+            if (hasFileToUpdate) {
+                await deleteFile(image.imageId);
+            }
             throw Error;
         }
 
         return updatedPost;
     } catch (error) {
-        console.log(error);
+        console.log("Error updating post:", error);
+        return null;
     }
 }
 export async function deletePost(postId: string, imageId: string) {
@@ -475,20 +479,19 @@ export async function updateUser(user: IUpdateUser) {
             imageUrl: user.imageUrl,
             imageId: user.imageId,
         };
-
-        if (hasFileToUpdate) {
+          if (hasFileToUpdate) {
             // Upload new file to appwrite storage
             const uploadedFile = await uploadFile(user.file[0]);
             if (!uploadedFile) throw Error;
 
-            // Get new file url
+            // Get direct download URL
             const fileUrl = getFilePreview(uploadedFile.$id);
             if (!fileUrl) {
                 await deleteFile(uploadedFile.$id);
                 throw Error;
             }
 
-            image = { ...image, imageUrl: fileUrl, imageId: uploadedFile.$id };
+            image = { ...image, imageUrl: fileUrl as string, imageId: uploadedFile.$id };
         }
 
         //  Update user
@@ -524,25 +527,28 @@ export async function updateUser(user: IUpdateUser) {
         console.log(error);
     }
 }
-export async function getChatMessages(chatid: string) {
+export async function getChatMessages(chatid: string, limit: number = 50, offset: number = 0) {
     try {
         const response = await databases.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.messagesCollectionId,
-            [Query.equal("chat_id", chatid), Query.orderDesc("$createdAt")]
+            [
+                Query.equal("chat_id", chatid), 
+                Query.orderAsc("$createdAt"),
+                Query.limit(limit),
+                Query.offset(offset)
+            ]
         );
 
-        // Reverse the array of documents
-        const reversedDocuments = response.documents.reverse();
-
-        return reversedDocuments;
+        return response.documents;
     } catch (error) {
-        console.error(error);
-        throw error; // Optionally rethrow the error if you want to handle it further up
+        console.error("Error fetching chat messages:", error);
+        throw error;
     }
 }
 export async function createChatMessages(message: IMessage) {
     try {
+        console.log("Creating message with status: sent");
         const response = await databases.createDocument(
             appwriteConfig.databaseId,
             appwriteConfig.messagesCollectionId,
@@ -551,9 +557,14 @@ export async function createChatMessages(message: IMessage) {
                 chat_id: message.chatid,
                 content: message.content,
                 sender: message.sender.id,
+                status: "sent" // Set initial status as sent
             }
         );
-        const chat = await databases.updateDocument(
+        
+        console.log("Message created successfully with ID:", response.$id, "and status:", response.status);
+        
+        // Update the chat with the last message info
+        await databases.updateDocument(
             appwriteConfig.databaseId,
             appwriteConfig.chatCollectionId,
             message.chatid,
@@ -564,40 +575,303 @@ export async function createChatMessages(message: IMessage) {
                 last_sender_id: message.sender.id,
                 last_message_id: response.$id,
             }
-        )
+        );
+        
         return response;
     } catch (error) {
-        console.error(error);
+        console.error("Error creating message:", error);
+        throw new Error("Failed to send message. Please try again.");
     }
 }
+
+// Get user's chats
+export async function getUserChats(userId: string) {
+    try {
+        const chats = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.chatCollectionId,
+            [
+                Query.orderDesc("last_message_time"),
+                Query.limit(100)
+            ]
+        );
+
+        // Filter chats where user is a member
+        const userChats = chats.documents.filter(chat => {
+            if (!chat.user_id || !Array.isArray(chat.user_id)) return false;
+            
+            // Handle both cases: user_id might be array of IDs or array of user objects
+            return chat.user_id.some((member: any) => {
+                // If member is a string (ID), compare directly
+                if (typeof member === 'string') {
+                    return member === userId;
+                }
+                // If member is an object, compare the $id property
+                if (typeof member === 'object' && member.$id) {
+                    return member.$id === userId;
+                }
+                return false;
+            });
+        });
+
+        console.log("Filtered user chats:", userChats);
+        return userChats;
+    } catch (error) {
+        console.error("Error fetching user chats:", error);
+        throw new Error("Failed to load chats. Please try again.");
+    }
+}
+
+// Check if a chat already exists with the same participants
+export async function checkExistingChat(members: string[]) {
+    try {
+        // Sort members to ensure consistent checking regardless of order
+        const sortedMembers = [...members].sort();
+        
+        // Get all chats and filter on client side since user_id is a relationship field
+        const chats = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.chatCollectionId,
+            [Query.orderDesc("$createdAt")]
+        );
+
+        if (!chats || chats.documents.length === 0) return null;
+
+        // Filter to find exact match
+        const existingChat = chats.documents.find(chat => {
+            if (!chat.user_id || !Array.isArray(chat.user_id)) return false;
+            
+            // Extract IDs from chat members (handle both string IDs and user objects)
+            const chatMemberIds = chat.user_id.map((member: any) => {
+                if (typeof member === 'string') return member;
+                if (typeof member === 'object' && member.$id) return member.$id;
+                return null;
+            }).filter(Boolean).sort();
+            
+            return chatMemberIds.length === sortedMembers.length && 
+                   chatMemberIds.every((memberId, index) => memberId === sortedMembers[index]);
+        });
+
+        return existingChat || null;
+    } catch (error) {
+        console.error("Error checking existing chat:", error);
+        return null;
+    }
+}
+
+// Get user's followers and following for better chat suggestions
+export async function getUserConnections(userId: string) {
+    try {
+        // Get followers
+        const followers = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.followCollectionId,
+            [Query.equal("followed", userId)]
+        );
+
+        // Get following
+        const following = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.followCollectionId,
+            [Query.equal("follower", userId)]
+        );
+
+        return {
+            followers: followers.documents.map(doc => doc.follower),
+            following: following.documents.map(doc => doc.followed)
+        };
+    } catch (error) {
+        console.error("Error getting user connections:", error);
+        return { followers: [], following: [] };
+    }
+}
+
 export async function createChat(chat: { name: string; members: string[] }) {
     try {
-        const response = await databases.createDocument(
+        // Check for existing chat first (especially for direct messages)
+        if (chat.members.length === 2) {
+            const existingChat = await checkExistingChat(chat.members);
+            if (existingChat) {
+                throw new Error("Chat already exists with these participants");
+            }
+        }
+
+        // Auto-generate name for direct messages if not provided
+        let chatName = chat.name;
+        if (chat.members.length === 2 && (!chatName || chatName === "manual")) {
+            try {
+                const user1 = await getUserById(chat.members[0]);
+                const user2 = await getUserById(chat.members[1]);
+                chatName = `${user1?.name} & ${user2?.name}`;
+            } catch (error) {
+                chatName = "Direct Message";
+            }
+        }        const response = await databases.createDocument(
             appwriteConfig.databaseId,
             appwriteConfig.chatCollectionId,
             ID.unique(),
             {
-                name: chat.name,
+                name: chatName,
                 user_id: chat.members,
+                last_message: "",
+                last_message_time: new Date().toISOString(),
+                last_sender_name: "",
+                last_sender_id: "",
+                last_message_id: "",
             }
         );
         return response;
     } catch (error) {
-        console.error(error);
+        console.error("Error creating chat:", error);
+        throw error;
     }
 }
-export async function likeMessage(messageId: string, like: boolean) {
+export async function likeMessage(messageId: string, userId: string, like: boolean) {
     try {
+        // Get current message to update likes array properly
+        const currentMessage = await databases.getDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.messagesCollectionId,
+            messageId
+        );
+
+        let updatedLikes = currentMessage.likes || [];
+        
+        // Ensure likes is an array
+        if (!Array.isArray(updatedLikes)) {
+            updatedLikes = [];
+        }
+
+        if (like) {
+            // Add like if not already present
+            if (!updatedLikes.includes(userId)) {
+                updatedLikes.push(userId);
+            }
+        } else {
+            // Remove like if present
+            updatedLikes = updatedLikes.filter((id: string) => id !== userId);
+        }
+
         const response = await databases.updateDocument(
             appwriteConfig.databaseId,
             appwriteConfig.messagesCollectionId,
             messageId,
             {
-                likes: like,
+                likes: updatedLikes,
             }
         );
         return response;
     } catch (error) {
-        console.error(error);
+        console.error("Error updating message like:", error);
+        throw new Error("Failed to update message. Please try again.");
+    }
+}
+
+export async function updateMessageStatus(_messageId: string, _status: "sent" | "delivered" | "read") {
+
+    const message = await databases.getDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.messagesCollectionId,
+        _messageId);
+
+    if (!message) {
+        console.error("Message not found:", _messageId);
+        throw new Error("Message not found");
+    }
+
+    // Update the status field in the message document
+    try{
+        const updatedMessage = await databases.updateDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.messagesCollectionId,
+            _messageId,
+            {
+                status: _status,
+            }
+        )
+        return updatedMessage;
+    } catch (error) {
+        console.error("Error updating message status:", error);
+        throw new Error("Failed to update message status. Please try again.");
+    }
+}
+
+// Get unread message count for a specific chat
+export async function getUnreadMessageCount(chatId: string, userId: string) {
+    try {
+        const messages = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.messagesCollectionId,
+            [
+                Query.equal("chat_id", chatId),
+                Query.notEqual("sender", userId),
+                Query.notEqual("status", "read")
+            ]
+        );
+
+        return messages.total;
+    } catch (error) {
+        console.error("Error getting unread message count:", error);
+        return 0;
+    }
+}
+
+// Get unread message counts for all user's chats
+export async function getUnreadCounts(userId: string) {
+    try {
+        const userChats = await getUserChats(userId);
+        const unreadCounts: { [chatId: string]: number } = {};
+        
+        // Get unread count for each chat
+        const countPromises = userChats.map(async (chat) => {
+            const count = await getUnreadMessageCount(chat.$id, userId);
+            unreadCounts[chat.$id] = count;
+        });
+
+        await Promise.all(countPromises);
+        return unreadCounts;
+    } catch (error) {
+        console.error("Error getting unread counts:", error);
+        return {};
+    }
+}
+
+// Mark all unread messages in a chat as read
+export async function markChatMessagesAsRead(chatId: string, userId: string) {
+    try {
+        console.log("Marking messages as read for chat:", chatId, "user:", userId);
+        
+        // Get all unread messages in the chat that were not sent by the user
+        const messages = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.messagesCollectionId,
+            [
+                Query.equal("chat_id", chatId),
+                Query.notEqual("sender", userId),
+                Query.notEqual("status", "read")
+            ]
+        );
+
+        console.log("Found unread messages:", messages.documents.length);
+
+        // Update each message status to "read"
+        const updatePromises = messages.documents.map(async (message) => {
+            console.log("Updating message status to read:", message.$id);
+            return await databases.updateDocument(
+                appwriteConfig.databaseId,
+                appwriteConfig.messagesCollectionId,
+                message.$id,
+                {
+                    status: "read"
+                }
+            );
+        });
+
+        await Promise.all(updatePromises);
+        console.log("Successfully marked", messages.documents.length, "messages as read");
+        return { success: true, updatedCount: messages.documents.length };
+    } catch (error) {
+        console.error("Error marking chat messages as read:", error);
+        throw new Error("Failed to mark messages as read. Please try again.");
     }
 }
