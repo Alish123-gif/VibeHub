@@ -527,20 +527,23 @@ export async function updateUser(user: IUpdateUser) {
         console.log(error);
     }
 }
-export async function getChatMessages(chatid: string, limit: number = 50, offset: number = 0) {
+export async function getChatMessages(chatid: string, limit: number = 20, offset: number = 0) {
     try {
         const response = await databases.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.messagesCollectionId,
             [
                 Query.equal("chat_id", chatid), 
-                Query.orderAsc("$createdAt"),
+                Query.orderDesc("$createdAt"), // Get newest messages first
                 Query.limit(limit),
                 Query.offset(offset)
             ]
         );
 
-        return response.documents;
+        return {
+            documents: response.documents.reverse(), // Return in ascending order for display
+            total: response.total
+        };
     } catch (error) {
         console.error("Error fetching chat messages:", error);
         throw error;
@@ -548,7 +551,6 @@ export async function getChatMessages(chatid: string, limit: number = 50, offset
 }
 export async function createChatMessages(message: IMessage) {
     try {
-        console.log("Creating message with status: sent");
         const response = await databases.createDocument(
             appwriteConfig.databaseId,
             appwriteConfig.messagesCollectionId,
@@ -560,8 +562,6 @@ export async function createChatMessages(message: IMessage) {
                 status: "sent" // Set initial status as sent
             }
         );
-        
-        console.log("Message created successfully with ID:", response.$id, "and status:", response.status);
         
         // Update the chat with the last message info
         await databases.updateDocument(
@@ -726,38 +726,16 @@ export async function createChat(chat: { name: string; members: string[] }) {
         throw error;
     }
 }
-export async function likeMessage(messageId: string, userId: string, like: boolean) {
+export async function likeMessage(messageId: string, like: boolean) {
     try {
-        // Get current message to update likes array properly
-        const currentMessage = await databases.getDocument(
-            appwriteConfig.databaseId,
-            appwriteConfig.messagesCollectionId,
-            messageId
-        );
-
-        let updatedLikes = currentMessage.likes || [];
-        
-        // Ensure likes is an array
-        if (!Array.isArray(updatedLikes)) {
-            updatedLikes = [];
-        }
-
-        if (like) {
-            // Add like if not already present
-            if (!updatedLikes.includes(userId)) {
-                updatedLikes.push(userId);
-            }
-        } else {
-            // Remove like if present
-            updatedLikes = updatedLikes.filter((id: string) => id !== userId);
-        }
-
+        // Since the likes field appears to be a boolean in the database schema,
+        // we'll update it directly instead of using an array
         const response = await databases.updateDocument(
             appwriteConfig.databaseId,
             appwriteConfig.messagesCollectionId,
             messageId,
             {
-                likes: updatedLikes,
+                likes: like, // Set as boolean directly
             }
         );
         return response;
@@ -839,8 +817,6 @@ export async function getUnreadCounts(userId: string) {
 // Mark all unread messages in a chat as read
 export async function markChatMessagesAsRead(chatId: string, userId: string) {
     try {
-        console.log("Marking messages as read for chat:", chatId, "user:", userId);
-        
         // Get all unread messages in the chat that were not sent by the user
         const messages = await databases.listDocuments(
             appwriteConfig.databaseId,
@@ -852,11 +828,12 @@ export async function markChatMessagesAsRead(chatId: string, userId: string) {
             ]
         );
 
-        console.log("Found unread messages:", messages.documents.length);
+        if (messages.documents.length === 0) {
+            return { success: true, updatedCount: 0 };
+        }
 
         // Update each message status to "read"
         const updatePromises = messages.documents.map(async (message) => {
-            console.log("Updating message status to read:", message.$id);
             return await databases.updateDocument(
                 appwriteConfig.databaseId,
                 appwriteConfig.messagesCollectionId,
@@ -868,7 +845,7 @@ export async function markChatMessagesAsRead(chatId: string, userId: string) {
         });
 
         await Promise.all(updatePromises);
-        console.log("Successfully marked", messages.documents.length, "messages as read");
+        console.log(`Marked ${messages.documents.length} messages as read in chat ${chatId}`);
         return { success: true, updatedCount: messages.documents.length };
     } catch (error) {
         console.error("Error marking chat messages as read:", error);

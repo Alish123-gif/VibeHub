@@ -345,8 +345,8 @@ export const useCreateChat = () => {
 }
 export const useLikeMessage = () => {
     return useMutation({
-        mutationFn: ({ messageId, userId, like }: { messageId: string, userId: string, like: boolean }) => 
-            likeMessage(messageId, userId, like),
+        mutationFn: ({ messageId, like }: { messageId: string, like: boolean }) => 
+            likeMessage(messageId, like),
     });
 }
 export const useCheckExistingChat = () => {

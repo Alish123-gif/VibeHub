@@ -54,3 +54,28 @@ export function formatTimeFromString(dateString: string) {
 
   return `${adjustedHours}:${formattedMinutes} ${period}`;
 }
+
+export function formatMessageTime(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInMilliseconds = now.getTime() - date.getTime();
+  const diffInMinutes = Math.floor(diffInMilliseconds / (1000 * 60));
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  const diffInDays = Math.floor(diffInHours / 24);
+
+  // Show relative time for recent messages
+  if (diffInMinutes < 1) {
+    return "Just now";
+  } else if (diffInMinutes < 60) {
+    return `${diffInMinutes}m ago`;
+  } else if (diffInHours < 24) {
+    return `${diffInHours}h ago`;
+  } else if (diffInDays === 1) {
+    return "Yesterday";
+  } else if (diffInDays < 7) {
+    return `${diffInDays} days ago`;
+  } else {
+    // Show formatted time for older messages
+    return formatTimeFromString(dateString);
+  }
+}
