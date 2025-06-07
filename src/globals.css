@@ -280,3 +280,25 @@
     @apply flex items-end justify-start hover:bg-transparent hover:text-white !important;
   }
 }
+
+/* Custom animations for the animated send button */
+@keyframes fly-letter {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: translate(calc(-50% + 60px), calc(-50% - 30px)) scale(0.8);
+    opacity: 0.7;
+  }
+
+  100% {
+    transform: translate(calc(-50% + 120px), calc(-50% - 60px)) scale(0.5);
+    opacity: 0;
+  }
+}
+
+.animate-fly-letter {
+  animation: fly-letter 1.5s ease-out forwards;
+}
