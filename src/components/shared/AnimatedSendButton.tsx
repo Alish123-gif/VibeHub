@@ -3,16 +3,15 @@ import { useState, useEffect } from 'react';
 interface AnimatedSendButtonProps {
   onClick: () => void;
   disabled: boolean;
-  isSending: boolean;
   messageContent: string;
 }
 
-const AnimatedSendButton = ({ onClick, disabled, isSending, messageContent }: AnimatedSendButtonProps) => {
+const AnimatedSendButton = ({ onClick, disabled, messageContent }: AnimatedSendButtonProps) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [letters, setLetters] = useState<string[]>([]);
 
   useEffect(() => {
-    if (isSending && messageContent) {
+    if (messageContent) {
       setIsAnimating(true);
       setLetters(messageContent.split(''));
       
@@ -24,7 +23,11 @@ const AnimatedSendButton = ({ onClick, disabled, isSending, messageContent }: An
 
       return () => clearTimeout(timeout);
     }
-  }, [isSending, messageContent]);
+    else{
+      setIsAnimating(false);
+      setLetters([]);
+    }
+  }, [messageContent]);
 
   const handleClick = () => {
     if (!disabled) {
@@ -100,13 +103,6 @@ const AnimatedSendButton = ({ onClick, disabled, isSending, messageContent }: An
               {letter === ' ' ? '•' : letter}
             </span>
           ))}
-        </div>
-      )}
-
-      {/* Loading overlay */}
-      {isSending && (
-        <div className="absolute inset-0 bg-primary-600 rounded-md flex items-center justify-center">
-          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
         </div>
       )}
     </button>

@@ -39,7 +39,7 @@ const ChatRoom = () => {
     }
 
     return (
-        <div className='flex flex-col h-screen'>
+        <div className='flex flex-col h-[100%]'>
             <MessagesContainer
                 messages={messages}
                 pendingMessages={pendingMessages}
@@ -50,9 +50,9 @@ const ChatRoom = () => {
                 onLike={handleLike}
                 onLoadMore={loadMoreMessages}
                 messagesEndRef={messagesEndRef}
-            />            <MessageInput
+            />
+            <MessageInput
                 onSubmit={handleSendMessage}
-                isSending={isSending}
             />
         </div>
     );

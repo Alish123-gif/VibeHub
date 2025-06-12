@@ -12,13 +12,13 @@ import AnimatedSendButton from './AnimatedSendButton';
 
 interface MessageInputProps {
     onSubmit: (content: string) => void;
-    isSending: boolean;
 }
 
-const MessageInput: React.FC<MessageInputProps> = ({ onSubmit, isSending }) => {
+const MessageInput: React.FC<MessageInputProps> = ({ onSubmit }) => {
     const { form, handleSubmit } = useMessageForm(onSubmit);
 
-    return (        <div className='p-4 bg-dark-2 border-t border-dark-4'>
+    return (
+    <div className='p-4 bg-dark-2 border-t border-dark-4'>
             <Form {...form}>
                 <form onSubmit={handleSubmit} className='flex items-center gap-2'>
                     <FormField
@@ -39,8 +39,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSubmit, isSending }) => {
                     />
                     <AnimatedSendButton
                         onClick={() => {}}
-                        disabled={isSending || !form.watch('content')?.trim()}
-                        isSending={isSending}
+                        disabled={!form.watch('content')?.trim()}
                         messageContent={form.watch('content') || ''}
                     />
                 </form>

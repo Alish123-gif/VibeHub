@@ -42,7 +42,7 @@ const RootLayout = () => {
       <Topbar />
       <div className="flex h-full">
         <Leftbar />
-        <main className="flex-1 md:ml-[270px] h-[calc(100vh-4rem)] max-w-full"> {/* Adjusted margin-left and height */}
+        <main className="flex-1 md:ml-[270px] h-full max-w-full">
           <Outlet />
         </main>
       </div>
