@@ -62,17 +62,6 @@ export const useChatRoom = () => {
             sender: user,
             content
         }, {
-            onSuccess: (newMessage) => {
-                // Immediately replace pending message with the real one for smoother transition
-                setPendingMessages(prev => prev.filter(msg => msg.$id !== optimisticMessage.$id));
-                setMessages(prev => {
-                    // Check if the message is already in the list (from real-time)
-                    const exists = prev.some(m => m.$id === newMessage.$id);
-                    if (exists) return prev;
-                    return [...prev, newMessage];
-                });
-                setShouldScrollToBottom(true);
-            },
             onError: () => {
                 // Remove failed message from pending
                 setPendingMessages(prev => prev.filter(msg => msg.$id !== optimisticMessage.$id));
@@ -134,25 +123,19 @@ export const useChatRoom = () => {
                     }
                     // Add new message to the end (most recent)
                     return [...prevMessages, message];
-                });
-                
-                // Check if this message was in our pending list
+                });                // Check if this message was in our pending list and remove it
                 setPendingMessages(prev => {
-                    const wasOurPendingMessage = prev.some(pendingMsg => 
-                        pendingMsg.content === message.content && 
-                        pendingMsg.sender.$id === message.sender.$id
-                    );
-                    
-                    // Reset sending state if this was our own message
-                    if (wasOurPendingMessage && message.sender.$id === user.id) {
+                    // For our own messages, clear pending messages
+                    if (message.sender.$id === user.id) {
                         resetSendMessage();
+                        
+                        // Remove the pending message that matches this content
+                        return prev.filter(pendingMsg => 
+                            pendingMsg.content !== message.content
+                        );
                     }
                     
-                    // Remove from pending messages
-                    return prev.filter(pendingMsg => 
-                        !(pendingMsg.content === message.content && 
-                          pendingMsg.sender.$id === message.sender.$id)
-                    );
+                    return prev;
                 });
                 
                 // Only mark as read if it's not our own message
