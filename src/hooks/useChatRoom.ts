@@ -13,9 +13,8 @@ import { toast } from '@/components/ui/use-toast';
 export const useChatRoom = () => {
     const { id } = useParams<{ id: string }>();
     const { user } = useUserContext();
-    
-    // API hooks
-    const { mutate: sendMessage, isPending: isSending } = useCreateChatMessage();
+      // API hooks
+    const { mutate: sendMessage, isPending: isSending, reset: resetSendMessage } = useCreateChatMessage();
     const { mutate: likeMessage } = useLikeMessage();
     const { mutate: markAsRead } = useMarkChatMessagesAsRead();
       // State
@@ -57,15 +56,22 @@ export const useChatRoom = () => {
 
         // Add to pending messages
         setPendingMessages(prev => [...prev, optimisticMessage]);
-
+        setShouldScrollToBottom(true);
         sendMessage({
             chatid: id,
             sender: user,
             content
         }, {
-            onSuccess: () => {
-                // Remove from pending messages
+            onSuccess: (newMessage) => {
+                // Immediately replace pending message with the real one for smoother transition
                 setPendingMessages(prev => prev.filter(msg => msg.$id !== optimisticMessage.$id));
+                setMessages(prev => {
+                    // Check if the message is already in the list (from real-time)
+                    const exists = prev.some(m => m.$id === newMessage.$id);
+                    if (exists) return prev;
+                    return [...prev, newMessage];
+                });
+                setShouldScrollToBottom(true);
             },
             onError: () => {
                 // Remove failed message from pending
@@ -96,7 +102,7 @@ export const useChatRoom = () => {
                 // Load more older messages - prepend them
                 setMessages(prev => [...result.documents, ...prev]);
                 setHasMoreMessages(result.documents.length === 20);
-                setShouldScrollToBottom(false); // Don't scroll to bottom when loading older messages
+                setShouldScrollToBottom(false);
             }
         } catch (err) {
             setError(err);
@@ -117,10 +123,9 @@ export const useChatRoom = () => {
         setPage(nextPage);
         loadMessages(nextPage);
     }, [hasMoreMessages, isPending, page, loadMessages]);
-
-    // Real-time message handling
     useEffect(() => {
-        if (user && id) {            const handleMessageReceived = (message: any) => {
+        if (user && id) {
+            const handleMessageReceived = (message: any) => {
                 setMessages(prevMessages => {
                     // Check if message already exists to prevent duplicates
                     const messageExists = prevMessages.some(m => m.$id === message.$id);
@@ -131,17 +136,29 @@ export const useChatRoom = () => {
                     return [...prevMessages, message];
                 });
                 
-                // Remove from pending messages if it exists (for our own sent messages)
+                // Check if this message was in our pending list
                 setPendingMessages(prev => {
-                    const updated = prev.filter(pendingMsg => 
+                    const wasOurPendingMessage = prev.some(pendingMsg => 
+                        pendingMsg.content === message.content && 
+                        pendingMsg.sender.$id === message.sender.$id
+                    );
+                    
+                    // Reset sending state if this was our own message
+                    if (wasOurPendingMessage && message.sender.$id === user.id) {
+                        resetSendMessage();
+                    }
+                    
+                    // Remove from pending messages
+                    return prev.filter(pendingMsg => 
                         !(pendingMsg.content === message.content && 
                           pendingMsg.sender.$id === message.sender.$id)
                     );
-                    return updated;
                 });
                 
-                // Mark messages as read when viewing chat
-                markAsRead({ chatId: id, userId: user.id });
+                // Only mark as read if it's not our own message
+                if (message.sender.$id !== user.id) {
+                    markAsRead({ chatId: id, userId: user.id });
+                }
                 
                 // Scroll to bottom for new incoming messages
                 setShouldScrollToBottom(true);
@@ -162,15 +179,16 @@ export const useChatRoom = () => {
             const subscription = subscribeToUpdate(user, id, handleMessageReceived);
             const sub = subscribeToMessages(user, handleLikeUpdate);
 
-            // Mark messages as read when entering chat
+            // Mark messages as read when entering chat (only once)
             markAsRead({ chatId: id, userId: user.id });
 
             return () => {
                 subscription();
                 sub();
-            };
-        }
-    }, [user, id, markAsRead]);    // Handle chat data loading
+            };        }
+    }, [user, id]);
+
+    // Handle chat data loading
     useEffect(() => {
         if (id) {
             // Load initial messages when chat ID changes

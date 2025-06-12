@@ -1,6 +1,6 @@
 import { timeAgo } from '@/lib/utils';
 import { Models } from 'appwrite';
-import React from 'react';
+import React, { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { MessageCircle, Users } from 'lucide-react';
 import { useGetUnreadCounts } from '@/lib/react-query/queriesAndMutations';
@@ -10,10 +10,9 @@ type ChatListProps = {
     chats: Array<Models.Document>;
 };
 
-const ChatList = ({ chats }: ChatListProps) => {
+const ChatList = memo(({ chats }: ChatListProps) => {
     const { user } = useUserContext();
     const { data: unreadCounts } = useGetUnreadCounts(user?.id || "");
-    console.log(chats);
     return (
         <div className='w-full mt-5'>
             <h2 className="h3-bold md:h2-bold text-left w-full mb-4">Chats</h2>
@@ -23,7 +22,8 @@ const ChatList = ({ chats }: ChatListProps) => {
                     <p className="text-light-4 text-center">No chats yet</p>
                 </div>
             ) : (
-                <ul className="flex flex-col w-full gap-3">                    {chats.map((chat: Models.Document) => {
+                <ul className="flex flex-col w-full gap-3">
+                    {chats.map((chat: Models.Document) => {
                         const isGroupChat = chat.user_id && chat.user_id.length > 2;
                         const hasMessages = chat.last_message && chat.last_message.trim() !== '';
                         const lastMessageTime = chat.last_message_time;
@@ -104,6 +104,6 @@ const ChatList = ({ chats }: ChatListProps) => {
             )}
         </div>
     );
-};
+});
 
 export default ChatList;

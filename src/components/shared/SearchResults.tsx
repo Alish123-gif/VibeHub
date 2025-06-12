@@ -7,7 +7,6 @@ type searchedPostsProps = {
   searchedPosts: Models.Document[]
 }
 const SearchResults = ({ isSearchFetching, searchedPosts }: searchedPostsProps) => {
-  console.log(searchedPosts)
   if(isSearchFetching) {
     return (
       <div className='flex-center w-full h-full'>
@@ -15,7 +14,7 @@ const SearchResults = ({ isSearchFetching, searchedPosts }: searchedPostsProps) 
       </div>
     )
   }
-  if(searchedPosts && searchedPosts.documents.length >0) return ( <GridPostList posts={searchedPosts.documents} /> )
+  if(searchedPosts && searchedPosts.length > 0) return ( <GridPostList posts={searchedPosts} /> )
 
   return (
     <p className='text-light-4 mt-10 text-center w-full'>No results found</p>

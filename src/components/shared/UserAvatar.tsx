@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 
 interface UserAvatarProps {
     user: any;
@@ -6,7 +6,7 @@ interface UserAvatarProps {
     className?: string;
 }
 
-const UserAvatar: React.FC<UserAvatarProps> = ({ 
+const UserAvatar: React.FC<UserAvatarProps> = memo(({ 
     user, 
     size = 'sm',
     className = ""
@@ -22,8 +22,8 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
             src={user.imageUrl || "/assets/icons/profile-placeholder.svg"}
             alt={user.name}
             className={`${sizeClasses[size]} rounded-full ${className}`}
-        />
+        /> 
     );
-};
+});
 
 export default UserAvatar;

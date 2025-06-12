@@ -149,6 +149,8 @@ export const useGetCurrentUser = () => {
     return useQuery({
         queryKey: [QUERY_KEYS.GET_CURRENT_USER],
         queryFn: getCurrentUser,
+        staleTime: 60000, // Consider data fresh for 1 minute
+        gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
     })
 }
 
@@ -265,7 +267,9 @@ export const useGetUserChats = (userId: string) => {
     return useQuery({
         queryKey: [QUERY_KEYS.GET_USER_CHATS, userId],
         queryFn: () => getUserChats(userId),
-        enabled: !!userId
+        enabled: !!userId,
+        staleTime: 30000, // Consider data fresh for 30 seconds
+        gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
     });
 }
 
@@ -274,14 +278,16 @@ export const useCreateChatMessage = () => {
     return useMutation({
         mutationFn: (message: IMessage) => createChatMessages(message),
         onSuccess: (_, variables) => {
-            // Invalidate chat messages for this specific chat
+            // Only invalidate specific chat messages instead of all
             queryClient.invalidateQueries({
                 queryKey: [QUERY_KEYS.GET_CHAT_MESSAGES, variables.chatid]
-            });            // Invalidate user chats to update last message
+            });            
+            // Only invalidate user chats for the sender and receiver
             queryClient.invalidateQueries({
-                queryKey: [QUERY_KEYS.GET_USER_CHATS]
+                queryKey: [QUERY_KEYS.GET_USER_CHATS, variables.sender.id]
             });
-            // Invalidate unread counts
+            
+            // Invalidate unread counts more specifically
             queryClient.invalidateQueries({
                 queryKey: [QUERY_KEYS.GET_UNREAD_COUNTS]
             });
@@ -366,6 +372,8 @@ export const useGetUnreadCounts = (userId: string) => {
         queryKey: [QUERY_KEYS.GET_UNREAD_COUNTS, userId],
         queryFn: () => getUnreadCounts(userId),
         enabled: !!userId,
-        refetchInterval: 30000, // Refetch every 30 seconds to keep counts fresh
+        refetchInterval: 60000, // Reduce from 30s to 60s to reduce API calls
+        staleTime: 30000, // Consider data fresh for 30 seconds
+        gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
     });
 };

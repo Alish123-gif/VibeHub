@@ -10,11 +10,6 @@ const Chat = () => {
     const { data: currentUser } = useGetCurrentUser();
     const { data: userChats, isLoading: isLoadingChats, error: chatsError } = useGetUserChats(currentUser?.$id || "");
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    
-    console.log("Current User:", currentUser);
-    console.log("User Chats:", userChats);
-    console.log("Loading:", isLoadingChats);
-    console.log("Error:", chatsError);
 
     if (!currentUser) {
         return (

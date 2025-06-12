@@ -21,7 +21,8 @@ const ChatRoom = () => {
         handleLike,
         handleSendMessage,
         loadMoreMessages
-    } = useChatRoom();    const { messagesEndRef } = useScrollToBottom(
+    } = useChatRoom();    
+    const { messagesEndRef } = useScrollToBottom(
         [messages, pendingMessages],
         shouldScrollToBottom
     );

@@ -1,6 +1,5 @@
 import React from 'react';
 import LikeButton from './LikeButton';
-import MessageStatus from './MessageStatus';
 
 interface PendingMessageProps {
     message: any;
@@ -8,23 +7,19 @@ interface PendingMessageProps {
 
 const PendingMessage: React.FC<PendingMessageProps> = ({ message }) => {
     return (
-        <div className="flex justify-end mb-1">
+        <div className="flex justify-end mb-1 animate-fadeIn">
             {/* Message bubble container */}
             <div className="max-w-[70%] order-2">
-                {/* Message bubble */}
-                <div className="px-4 py-2 break-words bg-primary-400 text-white rounded-t-xl rounded-bl-xl rounded-br-md opacity-70">
+                {/* Message bubble with smoother transition */}
+                <div className="px-4 py-2 break-words bg-primary-500 text-white rounded-t-xl rounded-bl-xl rounded-br-md opacity-80 transform transition-all duration-300 ease-in-out">
                     <p className="break-words">{message.content}</p>
                 </div>
                 
                 {/* Message metadata */}
                 <div className="flex items-center gap-2 mt-1 px-2 justify-end">
-                    <span className="text-xs text-light-4">
+                    <span className="text-xs text-light-4 animate-pulse">
                         Sending...
                     </span>
-                    {/* <MessageStatus 
-                        status="pending" 
-                        className="ml-1"
-                    /> */}
                 </div>
             </div>
             

@@ -7,13 +7,11 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Input } from '../ui/input';
 import { useUserContext } from '@/context/AuthContext';
-import { useParams } from 'react-router-dom';
 import { timeAgo } from '@/lib/utils';
 
 const PostComments = ({ postId }: { postId: string }) => {
     const { data: comments, isPending: isCommentLoading } = useGetComments(postId);
     const { user } = useUserContext();
-    const { id } = useParams();
     const { mutate: commentOnPost } = useCommentOnPost();
     const { mutate: deleteComment } = useDeleteComment();
     const form = useForm<z.infer<typeof commentValidationSchema>>({
@@ -29,7 +27,6 @@ const PostComments = ({ postId }: { postId: string }) => {
         form.reset();
     }
     const onDelete = (commentId: string) => {
-        console.log(commentId)
         deleteComment(commentId);
     }
 

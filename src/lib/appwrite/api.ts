@@ -587,34 +587,28 @@ export async function createChatMessages(message: IMessage) {
 // Get user's chats
 export async function getUserChats(userId: string) {
     try {
+        // Since we can't query on relationship attributes, we need to fetch and filter
+        // But we'll optimize by limiting the initial fetch and ordering by relevance
         const chats = await databases.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.chatCollectionId,
             [
-                Query.orderDesc("last_message_time"),
-                Query.limit(100)
+                Query.orderDesc("last_message_time"), // Get most recent chats first
+                Query.limit(200) // Increased limit but still reasonable
             ]
         );
 
-        // Filter chats where user is a member
+        // Filter chats where user is a member - but do it efficiently
         const userChats = chats.documents.filter(chat => {
             if (!chat.user_id || !Array.isArray(chat.user_id)) return false;
             
-            // Handle both cases: user_id might be array of IDs or array of user objects
+            // Optimized check - use some() for early exit
             return chat.user_id.some((member: any) => {
-                // If member is a string (ID), compare directly
-                if (typeof member === 'string') {
-                    return member === userId;
-                }
-                // If member is an object, compare the $id property
-                if (typeof member === 'object' && member.$id) {
-                    return member.$id === userId;
-                }
-                return false;
+                const memberId = typeof member === 'string' ? member : member?.$id;
+                return memberId === userId;
             });
         });
 
-        console.log("Filtered user chats:", userChats);
         return userChats;
     } catch (error) {
         console.error("Error fetching user chats:", error);
@@ -625,19 +619,38 @@ export async function getUserChats(userId: string) {
 // Check if a chat already exists with the same participants
 export async function checkExistingChat(members: string[]) {
     try {
-        // Sort members to ensure consistent checking regardless of order
-        const sortedMembers = [...members].sort();
+        // For direct chats (2 members), check if chat exists with both users
+        if (members.length === 2) {
+            const chats = await databases.listDocuments(
+                appwriteConfig.databaseId,
+                appwriteConfig.chatCollectionId,
+                [
+                    Query.equal("user_id", members[0]),
+                    Query.equal("user_id", members[1]),
+                    Query.limit(1)
+                ]
+            );
+            
+            return chats.documents.length > 0 ? chats.documents[0] : null;
+        }
         
-        // Get all chats and filter on client side since user_id is a relationship field
+        // For group chats, we still need to check manually since Appwrite 
+        // doesn't support complex array matching
         const chats = await databases.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.chatCollectionId,
-            [Query.orderDesc("$createdAt")]
+            [
+                Query.equal("user_id", members[0]), // At least include first member
+                Query.limit(50) // Limit results for performance
+            ]
         );
 
         if (!chats || chats.documents.length === 0) return null;
 
-        // Filter to find exact match
+        // Sort members to ensure consistent checking regardless of order
+        const sortedMembers = [...members].sort();
+
+        // Filter to find exact match for group chats
         const existingChat = chats.documents.find(chat => {
             if (!chat.user_id || !Array.isArray(chat.user_id)) return false;
             
@@ -797,16 +810,25 @@ export async function getUnreadMessageCount(chatId: string, userId: string) {
 // Get unread message counts for all user's chats
 export async function getUnreadCounts(userId: string) {
     try {
-        const userChats = await getUserChats(userId);
+        // Get all unread messages for this user in one query
+        const unreadMessages = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.messagesCollectionId,
+            [
+                Query.notEqual("sender", userId), // Not sent by this user
+                Query.notEqual("status", "read"), // Not read yet
+                Query.limit(1000) // Reasonable limit
+            ]
+        );
+
+        // Group by chat_id to count unread messages per chat
         const unreadCounts: { [chatId: string]: number } = {};
         
-        // Get unread count for each chat
-        const countPromises = userChats.map(async (chat) => {
-            const count = await getUnreadMessageCount(chat.$id, userId);
-            unreadCounts[chat.$id] = count;
+        unreadMessages.documents.forEach(message => {
+            const chatId = message.chat_id;
+            unreadCounts[chatId] = (unreadCounts[chatId] || 0) + 1;
         });
 
-        await Promise.all(countPromises);
         return unreadCounts;
     } catch (error) {
         console.error("Error getting unread counts:", error);
@@ -843,9 +865,7 @@ export async function markChatMessagesAsRead(chatId: string, userId: string) {
                 }
             );
         });
-
         await Promise.all(updatePromises);
-        console.log(`Marked ${messages.documents.length} messages as read in chat ${chatId}`);
         return { success: true, updatedCount: messages.documents.length };
     } catch (error) {
         console.error("Error marking chat messages as read:", error);

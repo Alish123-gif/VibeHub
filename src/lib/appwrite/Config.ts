@@ -43,9 +43,8 @@ export const subscribeToMessages = (user: IUser, handleLikeUpdate: (message: any
         if (user) {
             const updatedMessage = {
                 $id: (response.payload as { $id: string }).$id,
-                likes: (response.payload as { likes: boolean }).likes // Updated to boolean type
+                likes: (response.payload as { likes: boolean }).likes
             };
-            console.log(updatedMessage);
             handleLikeUpdate(updatedMessage);
         }
     });

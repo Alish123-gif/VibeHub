@@ -12,8 +12,6 @@ const LoadMoreIndicator: React.FC<LoadMoreIndicatorProps> = ({
     hasMore, 
     page 
 }) => {
-    // Debug logging
-    console.log('LoadMoreIndicator:', { isLoading, hasMore, page });
     
     if (!hasMore || page === 0) return null;
 

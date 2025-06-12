@@ -33,9 +33,7 @@ function SigninForm() {
 
     if (!session) return (toast({ title: "Sign in failed. Please try again.", variant: "destructive" }))
     const isLoggedIn = await checkAuthUser();
-    console.log(isLoggedIn)
     if (isLoggedIn) {
-      console.log('NAVIGATING')
       form.reset();
       navigate('/')
     } else {
