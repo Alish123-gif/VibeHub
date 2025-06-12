@@ -36,10 +36,8 @@ const ChatRoom = () => {
 
     if (!id) return null;    if (error) {
         return <ChatError />;
-    }
-
-    return (
-        <div className='flex flex-col h-[100%]'>
+    }    return (
+        <div className='flex flex-col h-screen max-h-screen overflow-hidden'>
             <MessagesContainer
                 messages={messages}
                 pendingMessages={pendingMessages}
@@ -51,9 +49,11 @@ const ChatRoom = () => {
                 onLoadMore={loadMoreMessages}
                 messagesEndRef={messagesEndRef}
             />
-            <MessageInput
-                onSubmit={handleSendMessage}
-            />
+            <div className='flex-shrink-0 sticky bottom-0 bg-dark-1 border-t border-dark-4 safe-area-bottom'>
+                <MessageInput
+                    onSubmit={handleSendMessage}
+                />
+            </div>
         </div>
     );
 };
