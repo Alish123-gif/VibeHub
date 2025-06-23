@@ -9,13 +9,11 @@ import { Models } from "appwrite";
 
 function Home() {
   const { data: posts, isPending: isPostLoading, isError: isErrorPosts } = useGetRecentPost();
-
   return (
     <>
-      <div className="flex flex-1 gap-6 xl:gap-8 h-screen overflow-hidden">
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col items-center h-full overflow-y-auto">
-          <div className="w-full max-w-3xl px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+      <div className="flex flex-1 gap-6 xl:gap-8 h-full">
+        {/* Main Content Area */}        <div className="flex-1 flex flex-col items-center h-full overflow-y-auto">
+          <div className="w-full max-w-3xl px-4 sm:px-6 lg:px-8 py-6 lg:py-10 mobile-bottom-spacing">
             {/* Header Section */}
             <div className="mb-8 lg:mb-12">
               <h1 className="h2-bold md:h1-bold text-left w-full mb-2">Home Feed</h1>

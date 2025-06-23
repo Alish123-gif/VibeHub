@@ -116,7 +116,7 @@
   }
 
   .common-container {
-    @apply flex flex-col flex-1 items-center gap-10 py-10 px-5 md:px-8 lg:p-14 custom-scrollbar;
+    @apply flex flex-col flex-1 items-center gap-10 py-10 px-5 md:px-8 lg:p-14 custom-scrollbar mobile-bottom-spacing;
   }
 
   /* All Users */
@@ -130,7 +130,7 @@
 
   /* Explore */
   .explore-container {
-    @apply flex flex-col flex-1 items-center py-10 px-5 md:p-14 custom-scrollbar;
+    @apply flex flex-col flex-1 items-center py-10 px-5 md:p-14 custom-scrollbar mobile-bottom-spacing;
   }
 
   .explore-inner_container {
@@ -156,7 +156,7 @@
 
   /* Post Details */
   .post_details-container {
-    @apply flex flex-col flex-1 gap-10 py-10 px-5 md:p-14 custom-scrollbar items-center;
+    @apply flex flex-col flex-1 gap-10 py-10 px-5 md:p-14 custom-scrollbar items-center mobile-bottom-spacing;
   }
 
   .post_details-card {
@@ -177,7 +177,7 @@
 
   /* Profile */
   .profile-container {
-    @apply flex flex-col items-center flex-1 gap-10 py-10 px-5 md:p-14 custom-scrollbar;
+    @apply flex flex-col items-center flex-1 gap-10 py-10 px-5 md:p-14 custom-scrollbar mobile-bottom-spacing;
   }
 
   .profile-inner_container {
@@ -190,7 +190,7 @@
 
   /* Saved */
   .saved-container {
-    @apply flex flex-col flex-1 items-center gap-10 py-10 px-5 md:p-14 custom-scrollbar;
+    @apply flex flex-col flex-1 items-center gap-10 py-10 px-5 md:p-14 custom-scrollbar mobile-bottom-spacing;
   }
 
   /* Bottom bar */
@@ -259,6 +259,19 @@
 
   .safe-area-top {
     padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* Mobile bottom bar spacing */
+  .mobile-bottom-spacing {
+    padding-bottom: 5rem;
+    /* 80px - height of bottom bar + padding */
+  }
+
+  @media (min-width: 768px) {
+    .mobile-bottom-spacing {
+      padding-bottom: 2.5rem;
+      /* 40px - normal padding on desktop */
+    }
   }
 
   /* Ensure proper height calculation on mobile */
