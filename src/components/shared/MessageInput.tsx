@@ -37,7 +37,8 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSubmit, disabled = false 
                                 <FormMessage />
                             </FormItem>
                         )}
-                    />                    <AnimatedSendButton
+                    />
+                    <AnimatedSendButton
                         onClick={() => {}}
                         disabled={disabled || !form.watch('content')?.trim()}
                         messageContent={form.watch('content') || ''}

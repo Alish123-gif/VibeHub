@@ -40,7 +40,7 @@ const ChatRoom = () => {
     }    return (
         <>
             <ConnectionStatus />
-            <div className='flex flex-col h-screen max-h-screen overflow-hidden'>
+            <div className='flex flex-col h-full max-h-full overflow-hidden'>
                 <MessagesContainer
                     messages={messages}
                     pendingMessages={pendingMessages}
@@ -52,7 +52,7 @@ const ChatRoom = () => {
                     onLoadMore={loadMoreMessages}
                     messagesEndRef={messagesEndRef}
                 />
-                <div className='flex-shrink-0 sticky bottom-0 bg-dark-1 border-t border-dark-4 safe-area-bottom'>
+                <div className='flex-shrink-0 bg-dark-1 border-t border-dark-4 safe-area-bottom'>
                     <MessageInput
                         onSubmit={handleSendMessage}
                         disabled={!user || isSending}

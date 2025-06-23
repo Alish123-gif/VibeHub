@@ -36,13 +36,12 @@ const RootLayout = () => {
       window.removeEventListener('scroll', handleScroll);
     };
   }, [prevScrollPos, location.pathname]);
-
   return (
-    <div className="flex flex-col h-screen w-full">
+    <div className="flex flex-col h-screen w-full overflow-hidden">
       <Topbar />
-      <div className="flex h-full">
+      <div className="flex flex-1 overflow-hidden">
         <Leftbar />
-        <main className="flex-1 md:ml-[270px] h-full max-w-full">
+        <main className="flex-1 md:ml-[270px] h-full max-w-full overflow-hidden">
           <Outlet />
         </main>
       </div>
