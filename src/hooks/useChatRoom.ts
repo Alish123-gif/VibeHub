@@ -9,10 +9,12 @@ import {
 import { getChatMessages } from '@/lib/appwrite/api';
 import { subscribeToMessages, subscribeToUpdate } from '@/lib/appwrite/Config';
 import { toast } from '@/components/ui/use-toast';
+import { useConnectionStatus } from './useConnectionStatus';
 
 export const useChatRoom = () => {
     const { id } = useParams<{ id: string }>();
     const { user } = useUserContext();
+    const { isOnline, wasOffline } = useConnectionStatus();
       // API hooks
     const { mutate: sendMessage, isPending: isSending, reset: resetSendMessage } = useCreateChatMessage();
     const { mutate: likeMessage } = useLikeMessage();
@@ -111,9 +113,13 @@ export const useChatRoom = () => {
         const nextPage = page + 1;
         setPage(nextPage);
         loadMessages(nextPage);
-    }, [hasMoreMessages, isPending, page, loadMessages]);
+    }, [hasMoreMessages, isPending, page, loadMessages]);    // Setup subscriptions for real-time updates
     useEffect(() => {
         if (user && id) {
+            let subscription: (() => void) | null = null;
+            let likeSubscription: (() => void) | null = null;
+            let connectionRetryTimeout: NodeJS.Timeout | null = null;
+            
             const handleMessageReceived = (message: any) => {
                 setMessages(prevMessages => {
                     // Check if message already exists to prevent duplicates
@@ -123,7 +129,9 @@ export const useChatRoom = () => {
                     }
                     // Add new message to the end (most recent)
                     return [...prevMessages, message];
-                });                // Check if this message was in our pending list and remove it
+                });
+
+                // Check if this message was in our pending list and remove it
                 setPendingMessages(prev => {
                     // For our own messages, clear pending messages
                     if (message.sender.$id === user.id) {
@@ -157,19 +165,58 @@ export const useChatRoom = () => {
                     }
                     return prevMessages;
                 });
+            };            const initializeSubscriptions = () => {
+                try {
+                    subscription = subscribeToUpdate(user, id, handleMessageReceived);
+                    likeSubscription = subscribeToMessages(user, handleLikeUpdate);
+                    
+                    // Clear any retry timeout on successful connection
+                    if (connectionRetryTimeout) {
+                        clearTimeout(connectionRetryTimeout);
+                        connectionRetryTimeout = null;
+                    }
+                    
+                    // Show reconnection success message if we were previously offline
+                    if (wasOffline && isOnline) {
+                        toast({
+                            title: "Connected",
+                            description: "Real-time messaging restored",
+                            duration: 3000
+                        });
+                    }
+                } catch (error) {
+                    console.error('Failed to initialize subscriptions:', error);
+                    
+                    // Only retry if we're online
+                    if (isOnline) {
+                        connectionRetryTimeout = setTimeout(() => {
+                            console.log('Retrying subscription connection...');
+                            initializeSubscriptions();
+                        }, 5000);
+                    }
+                }
             };
 
-            const subscription = subscribeToUpdate(user, id, handleMessageReceived);
-            const sub = subscribeToMessages(user, handleLikeUpdate);
+            // Initialize subscriptions
+            initializeSubscriptions();
 
             // Mark messages as read when entering chat (only once)
             markAsRead({ chatId: id, userId: user.id });
 
             return () => {
-                subscription();
-                sub();
+                if (subscription) subscription();
+                if (likeSubscription) likeSubscription();
+                if (connectionRetryTimeout) clearTimeout(connectionRetryTimeout);
             };        }
-    }, [user, id]);
+    }, [user, id, markAsRead, resetSendMessage, isOnline, wasOffline]);
+
+    // Handle reconnection when coming back online
+    useEffect(() => {
+        if (isOnline && wasOffline && user && id) {
+            // Reload messages to catch any missed while offline
+            loadMessages(0);
+        }
+    }, [isOnline, wasOffline, user, id, loadMessages]);
 
     // Handle chat data loading
     useEffect(() => {

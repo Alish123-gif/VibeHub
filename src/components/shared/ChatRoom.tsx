@@ -4,6 +4,7 @@ import { useScrollToBottom } from '@/hooks/useScrollToBottom';
 import MessagesContainer from './MessagesContainer';
 import MessageInput from './MessageInput';
 import ChatError from './ChatError';
+import ConnectionStatus from './ConnectionStatus';
 
 const ChatRoom = () => {
     const {
@@ -37,24 +38,28 @@ const ChatRoom = () => {
     if (!id) return null;    if (error) {
         return <ChatError />;
     }    return (
-        <div className='flex flex-col h-screen max-h-screen overflow-hidden'>
-            <MessagesContainer
-                messages={messages}
-                pendingMessages={pendingMessages}
-                currentUserId={user?.id || ''}
-                isPending={isPending}
-                page={page}
-                hasMoreMessages={hasMoreMessages}
-                onLike={handleLike}
-                onLoadMore={loadMoreMessages}
-                messagesEndRef={messagesEndRef}
-            />
-            <div className='flex-shrink-0 sticky bottom-0 bg-dark-1 border-t border-dark-4 safe-area-bottom'>
-                <MessageInput
-                    onSubmit={handleSendMessage}
+        <>
+            <ConnectionStatus />
+            <div className='flex flex-col h-screen max-h-screen overflow-hidden'>
+                <MessagesContainer
+                    messages={messages}
+                    pendingMessages={pendingMessages}
+                    currentUserId={user?.id || ''}
+                    isPending={isPending}
+                    page={page}
+                    hasMoreMessages={hasMoreMessages}
+                    onLike={handleLike}
+                    onLoadMore={loadMoreMessages}
+                    messagesEndRef={messagesEndRef}
                 />
+                <div className='flex-shrink-0 sticky bottom-0 bg-dark-1 border-t border-dark-4 safe-area-bottom'>
+                    <MessageInput
+                        onSubmit={handleSendMessage}
+                        disabled={!user || isSending}
+                    />
+                </div>
             </div>
-        </div>
+        </>
     );
 };
 

@@ -12,9 +12,10 @@ import AnimatedSendButton from './AnimatedSendButton';
 
 interface MessageInputProps {
     onSubmit: (content: string) => void;
+    disabled?: boolean;
 }
 
-const MessageInput: React.FC<MessageInputProps> = ({ onSubmit }) => {
+const MessageInput: React.FC<MessageInputProps> = ({ onSubmit, disabled = false }) => {
     const { form, handleSubmit } = useMessageForm(onSubmit);
 
     return (
@@ -24,22 +25,21 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSubmit }) => {
                     <FormField
                         control={form.control}
                         name="content"
-                        render={({ field }) => (
-                            <FormItem className='flex-1'>
+                        render={({ field }) => (                    <FormItem className='flex-1'>
                                 <FormControl>
                                     <Input 
                                         className='shad-input bg-dark-3 border-dark-4' 
-                                        placeholder="Type your message..." 
+                                        placeholder={disabled ? "Connecting..." : "Type your message..."} 
+                                        disabled={disabled}
                                         {...field} 
                                     />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
                         )}
-                    />
-                    <AnimatedSendButton
+                    />                    <AnimatedSendButton
                         onClick={() => {}}
-                        disabled={!form.watch('content')?.trim()}
+                        disabled={disabled || !form.watch('content')?.trim()}
                         messageContent={form.watch('content') || ''}
                     />
                 </form>

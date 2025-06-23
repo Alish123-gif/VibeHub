@@ -277,19 +277,36 @@ export const useCreateChatMessage = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (message: IMessage) => createChatMessages(message),
-        onSuccess: (_, variables) => {
+        onSuccess: (newMessage, variables) => {
             // Only invalidate specific chat messages instead of all
             queryClient.invalidateQueries({
                 queryKey: [QUERY_KEYS.GET_CHAT_MESSAGES, variables.chatid]
             });            
-            // Only invalidate user chats for the sender and receiver
+            
+            // Update the specific chat's query data if it exists
+            queryClient.setQueryData(
+                [QUERY_KEYS.GET_CHAT_MESSAGES, variables.chatid],
+                (oldData: any) => {
+                    if (oldData?.documents) {
+                        return {
+                            ...oldData,
+                            documents: [...oldData.documents, newMessage]
+                        };
+                    }
+                    return oldData;
+                }
+            );
+            
+            // Only invalidate user chats for the sender (more targeted)
             queryClient.invalidateQueries({
-                queryKey: [QUERY_KEYS.GET_USER_CHATS, variables.sender.id]
+                queryKey: [QUERY_KEYS.GET_USER_CHATS, variables.sender.id],
+                exact: true
             });
             
-            // Invalidate unread counts more specifically
+            // Invalidate unread counts only for the specific user
             queryClient.invalidateQueries({
-                queryKey: [QUERY_KEYS.GET_UNREAD_COUNTS]
+                queryKey: [QUERY_KEYS.GET_UNREAD_COUNTS, variables.sender.id],
+                exact: true
             });
         },
         onError: (error) => {
@@ -303,13 +320,40 @@ export const useUpdateMessageStatus = () => {
     return useMutation({
         mutationFn: ({ messageId, status }: { messageId: string, status: "sent" | "delivered" | "read" }) => 
             updateMessageStatus(messageId, status),
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: [QUERY_KEYS.GET_CHAT_MESSAGES]
-            });
-            queryClient.invalidateQueries({
-                queryKey: [QUERY_KEYS.GET_UNREAD_COUNTS]
-            });
+        onSuccess: (updatedMessage, variables) => {
+            // Only invalidate specific message queries instead of all chat messages
+            if (updatedMessage?.chat_id) {
+                queryClient.invalidateQueries({
+                    queryKey: [QUERY_KEYS.GET_CHAT_MESSAGES, updatedMessage.chat_id],
+                    exact: true
+                });
+                
+                // Update the message in cache directly if possible
+                queryClient.setQueryData(
+                    [QUERY_KEYS.GET_CHAT_MESSAGES, updatedMessage.chat_id],
+                    (oldData: any) => {
+                        if (oldData?.documents) {
+                            return {
+                                ...oldData,
+                                documents: oldData.documents.map((msg: any) =>
+                                    msg.$id === variables.messageId
+                                        ? { ...msg, status: variables.status }
+                                        : msg
+                                )
+                            };
+                        }
+                        return oldData;
+                    }
+                );
+            }
+            
+            // Only invalidate unread counts if marking as read
+            if (variables.status === 'read') {
+                queryClient.invalidateQueries({
+                    queryKey: [QUERY_KEYS.GET_UNREAD_COUNTS],
+                    exact: true
+                });
+            }
         }
     });
 }
@@ -319,13 +363,38 @@ export const useMarkChatMessagesAsRead = () => {
     return useMutation({
         mutationFn: ({ chatId, userId }: { chatId: string, userId: string }) => 
             markChatMessagesAsRead(chatId, userId),
-        onSuccess: () => {
+        onSuccess: (result, variables) => {
+            // Only invalidate specific chat messages
             queryClient.invalidateQueries({
-                queryKey: [QUERY_KEYS.GET_CHAT_MESSAGES]
+                queryKey: [QUERY_KEYS.GET_CHAT_MESSAGES, variables.chatId],
+                exact: true
             });
+            
+            // Only invalidate unread counts for specific user
             queryClient.invalidateQueries({
-                queryKey: [QUERY_KEYS.GET_UNREAD_COUNTS]
+                queryKey: [QUERY_KEYS.GET_UNREAD_COUNTS, variables.userId],
+                exact: true
             });
+            
+            // Update message status in cache directly if we know how many were updated
+            if (result?.updatedCount > 0) {
+                queryClient.setQueryData(
+                    [QUERY_KEYS.GET_CHAT_MESSAGES, variables.chatId],
+                    (oldData: any) => {
+                        if (oldData?.documents) {
+                            return {
+                                ...oldData,
+                                documents: oldData.documents.map((msg: any) =>
+                                    msg.sender.$id !== variables.userId && msg.status !== 'read'
+                                        ? { ...msg, status: 'read' }
+                                        : msg
+                                )
+                            };
+                        }
+                        return oldData;
+                    }
+                );
+            }
         }
     });
 };

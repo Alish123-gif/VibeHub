@@ -551,6 +551,7 @@ export async function getChatMessages(chatid: string, limit: number = 20, offset
 }
 export async function createChatMessages(message: IMessage) {
     try {
+        // Create the message document first
         const response = await databases.createDocument(
             appwriteConfig.databaseId,
             appwriteConfig.messagesCollectionId,
@@ -563,8 +564,9 @@ export async function createChatMessages(message: IMessage) {
             }
         );
         
-        // Update the chat with the last message info
-        await databases.updateDocument(
+        // Update the chat with the last message info in parallel (fire and forget)
+        // We don't await this since it's not critical for the message to be sent
+        databases.updateDocument(
             appwriteConfig.databaseId,
             appwriteConfig.chatCollectionId,
             message.chatid,
@@ -575,8 +577,12 @@ export async function createChatMessages(message: IMessage) {
                 last_sender_id: message.sender.id,
                 last_message_id: response.$id,
             }
-        );
+        ).catch(error => {
+            console.error("Error updating chat metadata:", error);
+            // Don't throw here - message was sent successfully
+        });
         
+        // Return immediately after message creation
         return response;
     } catch (error) {
         console.error("Error creating message:", error);
@@ -810,28 +816,31 @@ export async function getUnreadMessageCount(chatId: string, userId: string) {
 // Get unread message counts for all user's chats
 export async function getUnreadCounts(userId: string) {
     try {
-        // Get all unread messages for this user in one query
+        // Get all unread messages for this user in one optimized query
         const unreadMessages = await databases.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.messagesCollectionId,
             [
                 Query.notEqual("sender", userId), // Not sent by this user
                 Query.notEqual("status", "read"), // Not read yet
-                Query.limit(1000) // Reasonable limit
+                Query.orderDesc("$createdAt"), // Get newest first
+                Query.limit(500) // Reasonable limit for performance
             ]
         );
 
-        // Group by chat_id to count unread messages per chat
+        // Group by chat_id to count unread messages per chat efficiently
         const unreadCounts: { [chatId: string]: number } = {};
         
-        unreadMessages.documents.forEach(message => {
+        // Use a more efficient counting approach
+        for (const message of unreadMessages.documents) {
             const chatId = message.chat_id;
             unreadCounts[chatId] = (unreadCounts[chatId] || 0) + 1;
-        });
+        }
 
         return unreadCounts;
     } catch (error) {
         console.error("Error getting unread counts:", error);
+        // Return empty object instead of throwing to prevent UI breaking
         return {};
     }
 }
@@ -846,7 +855,8 @@ export async function markChatMessagesAsRead(chatId: string, userId: string) {
             [
                 Query.equal("chat_id", chatId),
                 Query.notEqual("sender", userId),
-                Query.notEqual("status", "read")
+                Query.notEqual("status", "read"),
+                Query.limit(100) // Limit for performance
             ]
         );
 
@@ -854,19 +864,38 @@ export async function markChatMessagesAsRead(chatId: string, userId: string) {
             return { success: true, updatedCount: 0 };
         }
 
-        // Update each message status to "read"
-        const updatePromises = messages.documents.map(async (message) => {
-            return await databases.updateDocument(
-                appwriteConfig.databaseId,
-                appwriteConfig.messagesCollectionId,
-                message.$id,
-                {
-                    status: "read"
+        // Update all messages in parallel with limited concurrency
+        const batchSize = 5; // Process 5 messages at a time to avoid overwhelming the server
+        const batches = [];
+        
+        for (let i = 0; i < messages.documents.length; i += batchSize) {
+            const batch = messages.documents.slice(i, i + batchSize);
+            batches.push(batch);
+        }
+
+        let totalUpdated = 0;
+          // Process batches sequentially, but operations within each batch run in parallel
+        for (const batch of batches) {
+            const batchPromises = batch.map(async (message) => {
+                try {
+                    await databases.updateDocument(
+                        appwriteConfig.databaseId,
+                        appwriteConfig.messagesCollectionId,
+                        message.$id,
+                        { status: "read" }
+                    );
+                    return 1;
+                } catch (error) {
+                    console.error(`Error updating message ${message.$id}:`, error);
+                    return 0;
                 }
-            );
-        });
-        await Promise.all(updatePromises);
-        return { success: true, updatedCount: messages.documents.length };
+            });
+            
+            const batchResults = await Promise.all(batchPromises);
+            totalUpdated += batchResults.reduce((sum: number, result: number) => sum + result, 0);
+        }
+
+        return { success: true, updatedCount: totalUpdated };
     } catch (error) {
         console.error("Error marking chat messages as read:", error);
         throw new Error("Failed to mark messages as read. Please try again.");

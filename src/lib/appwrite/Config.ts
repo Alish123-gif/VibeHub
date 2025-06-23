@@ -22,33 +22,101 @@ client.setEndpoint(appwriteConfig.url)
 
 
 export const subscribeToUpdate = (user: IUser, chat_id: string, onMessageReceived: (message: any) => void) => {
-    const subscription = client.subscribe(`databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.chatCollectionId}.documents`, response => {
-        if (user && chat_id === (response.payload as { $id: string }).$id) {
-            const message = {
-                $id: (response.payload as { last_message_id: string }).last_message_id,
-                content: (response.payload as { last_message: string }).last_message,
-                sender: {
-                    name: (response.payload as { last_sender_name: string }).last_sender_name,
-                    $id: (response.payload as { last_sender_id: string }).last_sender_id
-                },
-                $createdAt: (response.payload as { last_message_time: string }).last_message_time,
-            };
-            onMessageReceived(message);
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
+    const reconnectDelay = 1000; // Start with 1 second
+    
+    const createSubscription = () => {
+        try {
+            const subscription = client.subscribe(`databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.chatCollectionId}.documents`, response => {
+                try {
+                    if (user && chat_id === (response.payload as { $id: string }).$id) {
+                        const message = {
+                            $id: (response.payload as { last_message_id: string }).last_message_id,
+                            content: (response.payload as { last_message: string }).last_message,
+                            sender: {
+                                name: (response.payload as { last_sender_name: string }).last_sender_name,
+                                $id: (response.payload as { last_sender_id: string }).last_sender_id
+                            },
+                            $createdAt: (response.payload as { last_message_time: string }).last_message_time,
+                        };
+                        onMessageReceived(message);
+                        reconnectAttempts = 0; // Reset on successful message
+                    }
+                } catch (error) {
+                    console.error('Error processing subscription message:', error);
+                }
+            });
+            
+            return subscription;
+        } catch (error) {
+            console.error('Error creating subscription:', error);
+            
+            // Attempt to reconnect with exponential backoff
+            if (reconnectAttempts < maxReconnectAttempts) {
+                reconnectAttempts++;
+                const delay = reconnectDelay * Math.pow(2, reconnectAttempts - 1);
+                
+                console.log(`Attempting to reconnect subscription in ${delay}ms (attempt ${reconnectAttempts}/${maxReconnectAttempts})`);
+                
+                setTimeout(() => {
+                    return createSubscription();
+                }, delay);
+            } else {
+                console.error('Max reconnection attempts reached for subscription');
+            }
+            
+            return () => {}; // Return empty cleanup function
         }
-    });
-    return subscription;
+    };
+    
+    return createSubscription();
 };
 export const subscribeToMessages = (user: IUser, handleLikeUpdate: (message: any) => void) => {
-    const subscription = client.subscribe(`databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.messagesCollectionId}.documents`, response => {
-        if (user) {
-            const updatedMessage = {
-                $id: (response.payload as { $id: string }).$id,
-                likes: (response.payload as { likes: boolean }).likes
-            };
-            handleLikeUpdate(updatedMessage);
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
+    const reconnectDelay = 1000; // Start with 1 second
+    
+    const createSubscription = () => {
+        try {
+            const subscription = client.subscribe(`databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.messagesCollectionId}.documents`, response => {
+                try {
+                    if (user) {
+                        const updatedMessage = {
+                            $id: (response.payload as { $id: string }).$id,
+                            likes: (response.payload as { likes: boolean }).likes
+                        };
+                        handleLikeUpdate(updatedMessage);
+                        reconnectAttempts = 0; // Reset on successful message
+                    }
+                } catch (error) {
+                    console.error('Error processing like subscription message:', error);
+                }
+            });
+            
+            return subscription;
+        } catch (error) {
+            console.error('Error creating like subscription:', error);
+            
+            // Attempt to reconnect with exponential backoff
+            if (reconnectAttempts < maxReconnectAttempts) {
+                reconnectAttempts++;
+                const delay = reconnectDelay * Math.pow(2, reconnectAttempts - 1);
+                
+                console.log(`Attempting to reconnect like subscription in ${delay}ms (attempt ${reconnectAttempts}/${maxReconnectAttempts})`);
+                
+                setTimeout(() => {
+                    return createSubscription();
+                }, delay);
+            } else {
+                console.error('Max reconnection attempts reached for like subscription');
+            }
+            
+            return () => {}; // Return empty cleanup function
         }
-    });
-    return subscription;
+    };
+    
+    return createSubscription();
 }
 
 
